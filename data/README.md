@@ -12,10 +12,10 @@ The correction events, dependency annotations, expected state transitions, and s
 
 ## Splits
 
-| Split                   | Count | Use                                                           |
-| ----------------------- | ----- | ------------------------------------------------------------- |
-| `development.jsonl`     | 12    | Debug prompts, build harness, tune scoring thresholds         |
-| `holdout-manifest.json` | 36    | Sealed cases; opened only after harness and grader are frozen |
+| Split                   | Count   | Use                                                        |
+| ----------------------- | ------- | ---------------------------------------------------------- |
+| `development.jsonl`     | 1 of 12 | Debug prompts, build harness, tune scoring thresholds      |
+| `holdout-manifest.json` | 0 of 36 | Planned sealed set; build only after the harness is frozen |
 
 ## Case construction requirements
 
@@ -32,6 +32,7 @@ Each case must specify:
 
 ## Validation
 
+- The current development case is explicitly marked `not_reviewed`.
 - Two licensed clinicians review every holdout case.
 - Disagreements are adjudicated before the holdout is frozen.
 - If clinician dual-review is unavailable, the run is labeled a **methodological pilot**, not a healthcare safety evaluation.

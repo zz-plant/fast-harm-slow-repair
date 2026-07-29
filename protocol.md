@@ -2,7 +2,9 @@
 
 This evaluation tests whether a healthcare AI documentation and care-coordination workflow remains correctable after its record becomes wrong. The object of study is not an isolated model completion but a system trajectory across evidence events, record state, dependent artifacts, downstream tasks, and audit events.
 
-## 1. Preregistered claim
+**Current status:** draft protocol. It is not preregistered or frozen, and it contains no model-performance results.
+
+## 1. Claim to preregister
 
 **Primary claim:** A correction-aware control plane reduces unsafe persistence of contradicted information compared with an ordinary stateless prompt and an unconstrained tool-using agent.
 
@@ -74,8 +76,8 @@ The key comparison is **C versus A** on the same model and cases.
 
 We use ACI-BENCH because it contains full clinician-patient conversations with associated reference notes, has 207 examples across published splits, and is licensed CC BY 4.0. Some transcripts intentionally retain realistic speaker-tagging errors.
 
-- 12 development cases for building and debugging;
-- 36 sealed holdout cases;
+- target: 12 development cases for building and debugging; currently authored: 1;
+- target: 36 sealed holdout cases; currently authored: 0;
 - six correction-authority conditions crossed with six content families.
 
 **Correction-authority conditions:**

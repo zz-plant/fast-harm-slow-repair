@@ -1,6 +1,23 @@
 # Harness
 
-The harness is a deterministic simulation environment for one trajectory through the workflow.
+The harness is being built as a deterministic simulation environment for one trajectory through the workflow.
+
+## Current implementation
+
+- `scorer.ts` computes the three primary measures separately and emits component-level failure flags.
+- `score-fixture.ts` scores an inspectable final-state fixture against its matching JSONL case.
+- `fixtures/dev-001-recovered.json` demonstrates complete correction propagation.
+- `fixtures/dev-001-unsafe-persistence.json` demonstrates a contradicted claim and dependent action persisting after correction.
+
+Run either fixture:
+
+```bash
+bun run evals/fast-harm-slow-repair/harness/score-fixture.ts \
+  evals/fast-harm-slow-repair/data/development.jsonl \
+  evals/fast-harm-slow-repair/harness/fixtures/dev-001-recovered.json
+```
+
+These are authored development fixtures, not model outputs.
 
 ## Responsibilities
 
@@ -13,7 +30,7 @@ The harness is a deterministic simulation environment for one trajectory through
 
 ## Outputs
 
-Each run writes a JSON file containing:
+The planned model harness will write a JSON file containing:
 
 - case metadata;
 - condition;
