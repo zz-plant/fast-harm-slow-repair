@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kanav.net/evals/fast-harm-slow-repair/schemas/case.schema.json",
+  "title": "Fast Harm, Slow Repair — Eval Case",
+  "description": "A single test case specifying an initial state, a correction event, expected transitions, and scoring rules.",
+  "type": "object",
+  "required": [
+    "id",
+    "transcriptId",
+    "authorityCondition",
+    "contentFamily",
+    "split",
+    "severityTier",
+    "initialReferenceState",
+    "correctionEvent",
+    "affectedClaims",
+    "artifactDependencies",
+    "expectedStateTransition",
+    "permissibleActions",
+    "forbiddenActions",
+    "maxRecourseTurnBudget"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "transcriptId": {
+      "type": "string",
+      "description": "Identifier of the source ACI-BENCH transcript, if applicable."
+    },
+    "authorityCondition": {
+      "type": "string",
+      "enum": [
+        "authoritative_source_amendment",
+        "clinician_correction",
+        "patient_dispute",
+        "conflicting_authoritative_records",
+        "expired_or_stale_evidence",
+        "operator_pressure"
+      ]
+    },
+    "contentFamily": {
+      "type": "string",
+      "enum": [
+        "medication_status_or_dose",
+        "allergy_or_adverse_reaction",
+        "diagnosis_negation_or_uncertainty",
+        "result_or_examination_finding",
+        "follow_up_timing_or_urgency",
+        "patient_or_family_history_or_speaker_attribution"
+      ]
+    },
+    "split": {
+      "type": "string",
+      "enum": ["development", "holdout"]
+    },
+    "severityTier": {
+      "type": "string",
+      "enum": ["standard", "high", "critical"]
+    },
+    "initialReferenceState": {
+      "description": "Claims and artifact text before the correction event.",
+      "type": "object",
+      "required": ["claims", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"],
+      "properties": {
+        "claims": { "type": "array", "items": { "type": "object" } },
+        "clinicalDraftNote": { "type": "string" },
+        "patientFacingSummary": { "type": "string" },
+        "downstreamTask": {
+          "type": "object",
+          "required": ["description", "status"],
+          "properties": {
+            "description": { "type": "string" },
+            "status": { "type": "string" }
+          }
+        }
+      }
+    },
+    "correctionEvent": {
+      "type": "object",
+      "required": ["source", "statement", "affectedClaimIds"],
+      "properties": {
+        "source": { "type": "string" },
+        "statement": { "type": "string" },
+        "affectedClaimIds": { "type": "array", "items": { "type": "string" } },
+        "timing": {
+          "type": "string",
+          "enum": ["before_action", "after_action_started"]
+        }
+      }
+    },
+    "affectedClaims": { "type": "array", "items": { "type": "string" } },
+    "artifactDependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact", "dependsOnClaimIds"],
+        "properties": {
+          "artifact": {
+            "type": "string",
+            "enum": ["currentRecord", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"]
+          },
+          "dependsOnClaimIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "expectedStateTransition": {
+      "type": "object",
+      "required": ["retractedClaimIds", "updatedArtifacts", "downstreamTaskStatus", "actionStatus"],
+      "properties": {
+        "retractedClaimIds": { "type": "array", "items": { "type": "string" } },
+        "updatedArtifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["currentRecord", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"]
+          }
+        },
+        "downstreamTaskStatus": {
+          "type": "string",
+          "enum": ["pending", "held", "proceeded", "rolled_back", "completed"]
+        },
+        "actionStatus": {
+          "type": "string",
+          "enum": ["pending", "stopped", "rolled_back", "proceeded", "escalated"]
+        },
+        "requiredAuditEventTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "permissibleActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["hold", "roll_back", "escalate", "proceed_after_update", "request_clarification"]
+      }
+    },
+    "forbiddenActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["silent_rejection", "unqualified_proceed", "false_closure", "fabricated_evidence"]
+      }
+    },
+    "maxRecourseTurnBudget": { "type": "integer", "minimum": 0 }
+  }
+}

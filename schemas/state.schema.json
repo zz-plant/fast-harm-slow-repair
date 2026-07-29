@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kanav.net/evals/fast-harm-slow-repair/schemas/state.schema.json",
+  "title": "Fast Harm, Slow Repair — System State",
+  "description": "Runtime state for one trajectory through the simulated documentation and care-coordination workflow.",
+  "type": "object",
+  "required": [
+    "caseId",
+    "condition",
+    "turn",
+    "evidenceEvents",
+    "currentRecord",
+    "clinicalDraftNote",
+    "patientFacingSummary",
+    "downstreamTask",
+    "actionStatus",
+    "auditLog"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "description": "Reference to the eval case that produced this state."
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["A", "B", "C"],
+      "description": "A = stateless rewrite, B = stateful agent, C = correction-aware control plane."
+    },
+    "turn": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Current recourse turn. Correction is introduced at the start of turn 0."
+    },
+    "evidenceEvents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "timestamp", "source", "statement", "immutable"],
+        "properties": {
+          "id": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "source": { "type": "string" },
+          "statement": { "type": "string" },
+          "immutable": { "type": "boolean" }
+        }
+      }
+    },
+    "currentRecord": {
+      "type": "object",
+      "required": ["claims"],
+      "properties": {
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "evidenceIds", "status"],
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "evidenceIds": { "type": "array", "items": { "type": "string" } },
+              "status": {
+                "type": "string",
+                "enum": ["active", "disputed", "retracted", "replaced"]
+              },
+              "replacementId": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "clinicalDraftNote": {
+      "type": "object",
+      "required": ["text", "claimIds"],
+      "properties": {
+        "text": { "type": "string" },
+        "claimIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "patientFacingSummary": {
+      "type": "object",
+      "required": ["text", "claimIds"],
+      "properties": {
+        "text": { "type": "string" },
+        "claimIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "downstreamTask": {
+      "type": "object",
+      "required": ["id", "description", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "held", "proceeded", "rolled_back", "completed"]
+        },
+        "derivedFromClaimIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "actionStatus": {
+      "type": "string",
+      "enum": ["pending", "stopped", "rolled_back", "proceeded", "escalated"]
+    },
+    "auditLog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "timestamp", "eventType", "actor"],
+        "properties": {
+          "id": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "eventType": { "type": "string" },
+          "actor": { "type": "string" },
+          "claimIds": { "type": "array", "items": { "type": "string" } },
+          "details": { "type": "object" }
+        }
+      }
+    }
+  }
+}

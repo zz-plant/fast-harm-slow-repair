@@ -1,0 +1,12 @@
+{
+  "preregistrationId": "fast-harm-slow-repair-v0.1",
+  "caseCount": 36,
+  "sealedAt": null,
+  "sealedHash": null,
+  "clinicianReview": {
+    "required": true,
+    "reviewers": 2,
+    "adjudicated": false
+  },
+  "cases": []
+}
