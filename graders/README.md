@@ -4,15 +4,16 @@
 
 Most scoring is deterministic:
 
-- Was the correction recognized?
+- Was the correction recognized (the extracted `correctionAcknowledged` flag)?
 - Were contradicted claims retracted?
+- Were unaffected claims preserved?
 - Were dependent artifacts updated or held?
 - Was the action stopped, rolled back, or proceeded?
 - Is provenance linked to the correction?
 - Was the dispute falsely closed?
 - Did the human have to repeat the correction?
 
-These checks operate on the structured state produced by the harness.
+These checks operate on the structured state produced by the extraction step from every arm's raw output.
 
 ## Semantic grading
 
@@ -20,13 +21,15 @@ An LLM judge is used only for semantic equivalence in prose — for example, whe
 
 ## Judge validation
 
-Before use, the judge is validated on a stratified sample of HealthBench’s public meta-evaluation set, which contains physician labels for rubric criteria.
+The gold standard is the two study clinicians on FHSR's own corrected-note outputs. Clinician-clinician agreement is measured on the same sample, and the gate is set relative to it, as HealthBench does:
 
-Gate:
-
-- balanced macro-F1 ≥ 0.85;
+- judge macro-F1 ≥ clinician-clinician macro-F1 − 0.05 on FHSR artifacts;
 - negative-class recall ≥ 0.90;
 - repeated-label agreement ≥ 0.95;
 - no category with materially elevated false-pass risk.
 
-If the judge fails the gate, it is used only for exploratory review.
+A fixed absolute gate (such as macro-F1 ≥ 0.85) is not used: clinician-clinician agreement on health-content labels reaches only about 0.57–0.73, so no judge can clear a bar above the inter-rater ceiling.
+
+HealthBench's public meta-evaluation set is a supplementary check that the judge follows rubrics generally. It grades rubric criteria in chat replies rather than corrected-note equivalence, so it is not the FHSR gate.
+
+If the judge fails the gate, it is used only for exploratory review. Clinicians adjudicate all failures and a blinded sample of apparent passes.
