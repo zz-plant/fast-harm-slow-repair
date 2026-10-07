@@ -233,7 +233,7 @@ This design explicitly addresses common agent-evaluation hazards:
 Repository:
 
 ```
-evals/fast-harm-slow-repair/
+fast-harm-slow-repair/
   README.md
   protocol.md
   preregistration.json

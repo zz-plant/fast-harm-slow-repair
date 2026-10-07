@@ -12,9 +12,9 @@ The harness is being built as a deterministic simulation environment for one tra
 Run either fixture:
 
 ```bash
-bun run evals/fast-harm-slow-repair/harness/score-fixture.ts \
-  evals/fast-harm-slow-repair/data/development.jsonl \
-  evals/fast-harm-slow-repair/harness/fixtures/dev-001-recovered.json
+bun run harness/score-fixture.ts \
+  data/development.jsonl \
+  harness/fixtures/dev-001-recovered.json
 ```
 
 These are authored development fixtures, not model outputs.

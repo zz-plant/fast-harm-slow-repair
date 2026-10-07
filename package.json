@@ -1,0 +1,20 @@
+{
+  "name": "fast-harm-slow-repair",
+  "version": "0.1.0",
+  "description": "Draft evaluation protocol: does a healthcare AI workflow remain correctable after its record becomes wrong? Case and state schemas, a deterministic scorer, fixtures, and a preregistration draft.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "score": "bun run harness/score-fixture.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "bun": ">=1.2"
+  }
+}
