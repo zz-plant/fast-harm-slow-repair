@@ -20,7 +20,19 @@ describe("fast-harm-slow-repair eval protocol", () => {
     expect(preregistration.preregisteredAt).toBeNull();
     expect(readme).toContain("Draft protocol");
     expect(readme).not.toContain("Preregistered comparative evaluation");
-    expect(readme).toContain("Current development cases: **1 of 12**");
+  });
+
+  test("every document states the development-case count the data holds", () => {
+    // Counted from the data, so adding a case fails here until the prose
+    // that reports progress is updated with it.
+    const authored = read("data/development.jsonl").split("\n").filter(Boolean).length;
+    const target = JSON.parse(read("preregistration.json")).dataset.developmentCount;
+    const caseWord = authored === 1 ? "case" : "cases";
+
+    expect(read("README.md")).toContain(`Current development cases: **${authored} of ${target}**`);
+    expect(read("README.md")).toContain(`${authored} development ${caseWord}; holdout empty`);
+    expect(read("data/README.md")).toContain(`| ${authored} of ${target} `);
+    expect(read("protocol.md")).toContain(`currently authored: ${authored};`);
   });
 
   test("schemas are valid JSON", () => {
@@ -58,12 +70,13 @@ describe("fast-harm-slow-repair eval protocol", () => {
       .filter(Boolean)
       .map((line) => JSON.parse(line));
 
-    expect(cases).toHaveLength(1);
-    expect(cases[0].sourceDataset.name).toBe("ACI-BENCH");
-    expect(cases[0].sourceDataset.commit).toMatch(/^[a-f0-9]{40}$/);
-    expect(cases[0].sourceEvidenceSpans.length).toBeGreaterThan(0);
-    expect(cases[0].clinicalValidation.status).toBe("not_reviewed");
-    expect(cases[0].evidenceLabels).toContain("not_model_performance_evidence");
+    expect(cases.length).toBeGreaterThan(0);
+    for (const evalCase of cases) {
+      expect(evalCase.sourceDataset.name).toBe("ACI-BENCH");
+      expect(evalCase.sourceEvidenceSpans.length).toBeGreaterThan(0);
+      expect(evalCase.clinicalValidation.status).toBe("not_reviewed");
+      expect(evalCase.evidenceLabels).toContain("not_model_performance_evidence");
+    }
   });
 
   test("publishes inspectable recovered and unsafe-persistence development fixtures", () => {

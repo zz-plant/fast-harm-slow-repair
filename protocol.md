@@ -140,7 +140,7 @@ That produces:
 36 cases × 3 conditions × 2 models × 3 runs = 648 trajectories
 ```
 
-The local pilot can begin with the already installed `qwen3.5:9b-64k` and `gemma4:e4b-32k`. No OpenAI, Anthropic, or Google API credentials are currently configured, so a frontier run will require a key and a fixed inference budget.
+The local pilot uses the two pinned local models listed in `preregistration.json` (`qwen3.5:9b-64k` and `gemma4:e4b-32k`). The frontier model is not yet chosen; that run needs a fixed inference budget set before it starts.
 
 Run order will be randomized. Temperature, token limits, tool definitions, and retry policy will be recorded. Repetitions will not be treated as statistically independent cases.
 
@@ -265,9 +265,9 @@ Public report:
 - residual risks and reconsideration triggers;
 - downloadable JSON/CSV and reproducibility instructions.
 
-Site title: **Fast Harm, Slow Repair**.
+Report title: **Fast Harm, Slow Repair**.
 
-Subtitle: **Does a healthcare AI workflow remain correctable after its record becomes wrong?**
+Report subtitle: **Does a healthcare AI workflow remain correctable after its record becomes wrong?**
 
 ## 13. Execution sequence
 
@@ -283,8 +283,6 @@ Subtitle: **Does a healthcare AI workflow remain correctable after its record be
 10. Conduct blinded failure adjudication.
 11. Run the frozen analysis.
 12. Publish the risk report and reproducibility bundle.
-13. Add verified findings to Kanav’s site and résumé.
-14. Run `bun run qa`, rendered desktop/mobile checks, PDF verification, and claim-safety review before any deploy.
 
 Estimated execution: roughly 10 focused working days plus clinician scheduling. External costs are likely two clinician honoraria and approximately $50–$250 in frontier-model inference, depending on the chosen pinned model and dialogue lengths.
 

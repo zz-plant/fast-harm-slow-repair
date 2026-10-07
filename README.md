@@ -86,25 +86,45 @@ No composite "safety score." Primary measures reported separately:
 
 Plus secondary measures for detection, rollback, false closure, authority overreach, evidence/provenance accuracy, blanket refusal, run-to-run consistency, and human burden.
 
+The deterministic scorer in `harness/scorer.ts` computes the three primary measures and component-level failure flags. It does not yet score the secondary measures, and it does not yet read a case's permissible or forbidden actions.
+
 ## Use of results
 
 Version 0.1 will not claim autonomous clinical safety. If the study is completed, a system may be described as **eligible for a bounded, human-reviewed pilot** only if it meets the frozen thresholds in `preregistration.json`. Any critical-case unsafe-persistence failure fails the gate.
 
+## Running it
+
+Requires [Bun](https://bun.sh) 1.2 or later.
+
+```sh
+bun install
+bun run test        # scorer, validator, and protocol-consistency tests
+bun run typecheck
+bun run validate    # every committed case and fixture against the schemas
+bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
+```
+
+`bun run score` validates both inputs before scoring and exits non-zero on a malformed case or state.
+
 ## Repository layout
 
-| Path                   | Contents                                            |
-| ---------------------- | --------------------------------------------------- |
-| `protocol.md`          | Full eval protocol                                  |
-| `preregistration.json` | Draft claim, dataset, thresholds, and analysis plan |
-| `schemas/`             | JSON Schemas for system state and eval cases        |
-| `data/`                | Development and holdout cases                       |
-| `prompts/`             | Condition prompts                                   |
-| `harness/`             | Deterministic sandbox and scorer                    |
-| `graders/`             | Semantic grader and validation against HealthBench  |
-| `analysis/`            | Reproducible analysis scripts                       |
-| `results/`             | Published trajectories, tables, and decision report |
-| `artifacts/`           | Hashed protocol bundle for holdout run              |
-| `limitations.md`       | Limitations and reconsideration triggers            |
+| Path                   | Contents                                               | Status                            |
+| ---------------------- | ------------------------------------------------------ | --------------------------------- |
+| `protocol.md`          | Full eval protocol                                     | Draft                             |
+| `preregistration.json` | Claim, dataset, thresholds, and analysis plan          | Draft, not frozen                 |
+| `schemas/`             | JSON Schemas for eval cases and system state           | Implemented                       |
+| `data/`                | Development cases and the holdout manifest             | 1 development case; holdout empty |
+| `harness/`             | Scorer, input validator, and two authored fixtures     | Implemented; no model runner yet  |
+| `prompts/`             | Condition prompts                                      | Plan only                         |
+| `graders/`             | Semantic grader and its validation against HealthBench | Plan only                         |
+| `analysis/`            | Analysis scripts                                       | Plan only                         |
+| `results/`             | Trajectories, tables, and the decision report          | Empty until the holdout run       |
+| `artifacts/`           | Hashed protocol bundle for the holdout run             | Empty until the holdout is sealed |
+| `limitations.md`       | Limitations and reconsideration triggers               | Draft                             |
+
+## License
+
+The code, schemas, and protocol text are MIT-licensed (see `LICENSE`). The transcript and note excerpts in `data/` come from [ACI-BENCH](https://github.com/wyim/aci-bench) and remain under CC BY 4.0; each case carries its source commit and citation.
 
 ## Definition of done
 

@@ -183,9 +183,7 @@
     "Run the randomized model/architecture matrix",
     "Conduct blinded failure adjudication",
     "Run the frozen analysis",
-    "Publish the risk report and reproducibility bundle",
-    "Add verified findings to Kanav’s site and résumé",
-    "Run bun run qa, rendered desktop/mobile checks, PDF verification, and claim-safety review before any deploy"
+    "Publish the risk report and reproducibility bundle"
   ],
   "publishedArtifacts": {
     "reportSections": [
