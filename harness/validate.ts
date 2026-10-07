@@ -1,0 +1,98 @@
+import { readFileSync } from "node:fs";
+import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
+
+const root = new URL("../", import.meta.url);
+const readJson = (path: string) => JSON.parse(readFileSync(new URL(path, root), "utf8"));
+
+const ajv = new Ajv2020({ allErrors: true, strict: false });
+addFormats(ajv);
+const caseSchema = ajv.compile(readJson("schemas/case.schema.json"));
+const stateSchema = ajv.compile(readJson("schemas/state.schema.json"));
+
+type Json = Record<string, any>;
+
+function schemaErrors(validate: typeof caseSchema, value: unknown): string[] {
+  if (validate(value)) return [];
+  return (validate.errors ?? []).map(
+    (error) => `${error.instancePath || "(root)"} ${error.message ?? "is invalid"}`
+  );
+}
+
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && new Set([...a, ...b]).size === new Set(a).size;
+
+/**
+ * Checks an eval case against the case schema and the cross-field rules the
+ * scorer relies on but the schema cannot express. Returns one message per
+ * problem; an empty list means the case is usable.
+ */
+export function validateCase(evalCase: Json): string[] {
+  const errors = schemaErrors(caseSchema, evalCase);
+  if (errors.length > 0) return errors;
+
+  const claimIds = new Set<string>(
+    evalCase.initialReferenceState.claims.map((claim: Json) => claim.id)
+  );
+  const transitions: Json[] = evalCase.expectedStateTransition.claimTransitions;
+  const transitionFor = (claimId: string) => transitions.find((t) => t.claimId === claimId);
+
+  if (!sameSet(evalCase.affectedClaims, evalCase.correctionEvent.affectedClaimIds)) {
+    errors.push("affectedClaims and correctionEvent.affectedClaimIds name different claims");
+  }
+  for (const claimId of evalCase.affectedClaims) {
+    if (!claimIds.has(claimId)) {
+      errors.push(`affected claim ${claimId} is not in initialReferenceState.claims`);
+    }
+    if (!transitionFor(claimId)) {
+      errors.push(`affected claim ${claimId} has no expected claim transition`);
+    }
+  }
+  for (const dependency of evalCase.artifactDependencies) {
+    for (const claimId of dependency.dependsOnClaimIds) {
+      if (!claimIds.has(claimId)) {
+        errors.push(`${dependency.artifact} depends on ${claimId}, which is not an initial claim`);
+      }
+    }
+  }
+  const retracted = transitions.filter((t) => t.status === "retracted").map((t) => t.claimId);
+  if (!sameSet(retracted, evalCase.expectedStateTransition.retractedClaimIds)) {
+    errors.push("retractedClaimIds does not match the claim transitions with status retracted");
+  }
+  return errors;
+}
+
+/** Checks a final state against the state schema and its internal references. */
+export function validateState(state: Json): string[] {
+  const errors = schemaErrors(stateSchema, state);
+  if (errors.length > 0) return errors;
+
+  const claimIds = new Set<string>(state.currentRecord.claims.map((claim: Json) => claim.id));
+  for (const claim of state.currentRecord.claims) {
+    if (claim.replacementId && !claimIds.has(claim.replacementId)) {
+      errors.push(`claim ${claim.id} names replacement ${claim.replacementId}, which is not in the record`);
+    }
+  }
+  for (const artifact of ["clinicalDraftNote", "patientFacingSummary"] as const) {
+    for (const claimId of state[artifact].claimIds) {
+      if (!claimIds.has(claimId)) {
+        errors.push(`${artifact} cites ${claimId}, which is not in the record`);
+      }
+    }
+  }
+  return errors;
+}
+
+/** Reads a JSONL file of eval cases, one object per non-empty line. */
+export function readCases(path: string): Json[] {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line, index) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        throw new Error(`${path}:${index + 1} is not valid JSON`);
+      }
+    });
+}
