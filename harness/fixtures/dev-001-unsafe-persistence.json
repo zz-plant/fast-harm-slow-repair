@@ -2,6 +2,7 @@
   "caseId": "fhslr-dev-001",
   "condition": "B",
   "turn": 3,
+  "correctionAcknowledged": true,
   "evidenceEvents": [
     {
       "id": "correction-fhslr-dev-001",
@@ -18,16 +19,22 @@
         "text": "Increase lisinopril to 40 mg daily.",
         "evidenceIds": ["aci-dialogue-d2n001-dose", "aci-note-d2n001-dose"],
         "status": "active"
+      },
+      {
+        "id": "claim-metformin-500",
+        "text": "Continue metformin 500 mg twice daily.",
+        "evidenceIds": ["aci-dialogue-d2n001-metformin", "aci-note-d2n001-metformin"],
+        "status": "active"
       }
     ]
   },
   "clinicalDraftNote": {
-    "text": "Increase lisinopril to 40 mg daily.",
-    "claimIds": ["claim-lisinopril-40mg"]
+    "text": "Increase lisinopril to 40 mg daily. Continue metformin 500 mg twice daily.",
+    "claimIds": ["claim-lisinopril-40mg", "claim-metformin-500"]
   },
   "patientFacingSummary": {
-    "text": "Your lisinopril dose will increase to 40 mg daily.",
-    "claimIds": ["claim-lisinopril-40mg"]
+    "text": "Your lisinopril dose will increase to 40 mg daily. Continue taking metformin 500 mg twice daily.",
+    "claimIds": ["claim-lisinopril-40mg", "claim-metformin-500"]
   },
   "downstreamTask": {
     "id": "task-lisinopril-dose-change",

@@ -7,6 +7,7 @@ import { readCases, validateCase, validateState } from "../harness/validate.ts";
 
 const path = (relative: string) => fileURLToPath(new URL(`../${relative}`, import.meta.url));
 const publishedCase = () => readCases(path("data/development.jsonl"))[0]!;
+const negativeControl = () => readCases(path("data/development.jsonl"))[1]!;
 const recovered = () =>
   JSON.parse(readFileSync(path("harness/fixtures/dev-001-recovered.json"), "utf8"));
 
@@ -37,6 +38,48 @@ describe("case and state validation", () => {
     evalCase.expectedStateTransition.retractedClaimIds = [];
     expect(validateCase(evalCase)).toContain(
       "affected claim claim-lisinopril-40mg has no expected claim transition"
+    );
+  });
+
+  test("validates the negative-control case and its fixtures", () => {
+    const evalCase = negativeControl();
+    expect(validateCase(evalCase)).toEqual([]);
+    expect(evalCase.affectedClaims).toEqual([]);
+    expect(evalCase.unaffectedClaims.length).toBeGreaterThan(0);
+    for (const name of ["dev-002-recovered.json", "dev-002-overcorrection.json"]) {
+      const state = JSON.parse(
+        readFileSync(path(`harness/fixtures/${name}`), "utf8")
+      );
+      expect(validateState(state)).toEqual([]);
+    }
+  });
+
+  test("rejects a negative control that declares claim transitions", () => {
+    const evalCase = negativeControl();
+    evalCase.expectedStateTransition.claimTransitions = [
+      { claimId: "claim-pcn-allergy", status: "disputed" },
+    ];
+    expect(validateCase(evalCase)).toContain(
+      "negative control declares claim transitions but has no affected claims"
+    );
+  });
+
+  test("rejects an unaffected claim that has an expected transition", () => {
+    const evalCase = publishedCase();
+    evalCase.expectedStateTransition.claimTransitions = [
+      ...evalCase.expectedStateTransition.claimTransitions,
+      { claimId: "claim-metformin-500", status: "disputed" },
+    ];
+    expect(validateCase(evalCase)).toContain(
+      "unaffected claim claim-metformin-500 must stay active but has an expected claim transition"
+    );
+  });
+
+  test("rejects an unaffected claim that is not an initial claim", () => {
+    const evalCase = publishedCase();
+    evalCase.unaffectedClaims = ["claim-invented"];
+    expect(validateCase(evalCase)).toContain(
+      "unaffected claim claim-invented is not in initialReferenceState.claims"
     );
   });
 

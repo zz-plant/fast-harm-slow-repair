@@ -8,6 +8,7 @@
     "caseId",
     "condition",
     "turn",
+    "correctionAcknowledged",
     "evidenceEvents",
     "currentRecord",
     "clinicalDraftNote",
@@ -32,6 +33,10 @@
       "type": "integer",
       "minimum": 0,
       "description": "Current recourse turn. Correction is introduced at the start of turn 0."
+    },
+    "correctionAcknowledged": {
+      "type": "boolean",
+      "description": "Set by the extraction step from the raw output. True when the run acknowledged the correction or dispute. Every arm, including the stateless rewrite, expresses this after extraction; the audit log does not."
     },
     "evidenceEvents": {
       "type": "array",

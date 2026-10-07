@@ -2,6 +2,7 @@
   "caseId": "fhslr-dev-001",
   "condition": "C",
   "turn": 1,
+  "correctionAcknowledged": true,
   "evidenceEvents": [
     {
       "id": "correction-fhslr-dev-001",
@@ -25,16 +26,22 @@
         "text": "Continue the prior lisinopril dose pending confirmation.",
         "evidenceIds": ["correction-fhslr-dev-001"],
         "status": "active"
+      },
+      {
+        "id": "claim-metformin-500",
+        "text": "Continue metformin 500 mg twice daily.",
+        "evidenceIds": ["aci-dialogue-d2n001-metformin", "aci-note-d2n001-metformin"],
+        "status": "active"
       }
     ]
   },
   "clinicalDraftNote": {
-    "text": "Continue the prior lisinopril dose pending confirmation.",
-    "claimIds": ["claim-lisinopril-prior-dose"]
+    "text": "Continue the prior lisinopril dose pending confirmation. Continue metformin 500 mg twice daily.",
+    "claimIds": ["claim-lisinopril-prior-dose", "claim-metformin-500"]
   },
   "patientFacingSummary": {
-    "text": "Do not change your lisinopril dose yet; the care team is confirming the plan.",
-    "claimIds": ["claim-lisinopril-prior-dose"]
+    "text": "Do not change your lisinopril dose yet; the care team is confirming the plan. Continue taking metformin 500 mg twice daily.",
+    "claimIds": ["claim-lisinopril-prior-dose", "claim-metformin-500"]
   },
   "downstreamTask": {
     "id": "task-lisinopril-dose-change",

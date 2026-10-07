@@ -53,8 +53,11 @@ describe("fast-harm-slow-repair eval protocol", () => {
     expect(caseSchema.required).toContain("sourceEvidenceSpans");
     expect(caseSchema.required).toContain("clinicalValidation");
     expect(caseSchema.required).toContain("evidenceLabels");
+    expect(caseSchema.required).toContain("unaffectedClaims");
     expect(state.required).toContain("dispute");
     expect(state.required).toContain("humanCorrectionRepetitions");
+    expect(state.required).toContain("correctionAcknowledged");
+    expect(state.properties.downstreamTask.required).toContain("derivedFromClaimIds");
   });
 
   test("holdout manifest is valid and sealed cases are hidden", () => {
@@ -80,9 +83,14 @@ describe("fast-harm-slow-repair eval protocol", () => {
   });
 
   test("publishes inspectable recovered and unsafe-persistence development fixtures", () => {
-    expect(existsSync(join(evalRoot, "harness/fixtures/dev-001-recovered.json"))).toBe(true);
-    expect(existsSync(join(evalRoot, "harness/fixtures/dev-001-unsafe-persistence.json"))).toBe(
-      true
-    );
+    for (const name of [
+      "dev-001-recovered.json",
+      "dev-001-recovered-A.json",
+      "dev-001-unsafe-persistence.json",
+      "dev-002-recovered.json",
+      "dev-002-overcorrection.json",
+    ]) {
+      expect(existsSync(join(evalRoot, `harness/fixtures/${name}`))).toBe(true);
+    }
   });
 });

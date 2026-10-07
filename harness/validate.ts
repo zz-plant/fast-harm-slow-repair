@@ -48,6 +48,41 @@ export function validateCase(evalCase: Json): string[] {
       errors.push(`affected claim ${claimId} has no expected claim transition`);
     }
   }
+  for (const claimId of evalCase.unaffectedClaims) {
+    if (!claimIds.has(claimId)) {
+      errors.push(`unaffected claim ${claimId} is not in initialReferenceState.claims`);
+    }
+    if (evalCase.affectedClaims.includes(claimId)) {
+      errors.push(`claim ${claimId} is listed as both affected and unaffected`);
+    }
+    if (transitionFor(claimId)) {
+      errors.push(
+        `unaffected claim ${claimId} must stay active but has an expected claim transition`
+      );
+    }
+  }
+  // A claim that transitions without being affected must be a replacement claim
+  // introduced by the correction: a new claim, not an initial one. Unaffected
+  // initial claims must stay active, which is what the scorer enforces.
+  for (const transition of transitions) {
+    if (!evalCase.affectedClaims.includes(transition.claimId) && claimIds.has(transition.claimId)) {
+      errors.push(
+        `transitioned claim ${transition.claimId} is an initial claim that is not affected`
+      );
+    }
+  }
+  if (evalCase.affectedClaims.length === 0) {
+    // Negative control: the correction must not propagate at all.
+    if (transitions.length > 0) {
+      errors.push("negative control declares claim transitions but has no affected claims");
+    }
+    if (evalCase.expectedStateTransition.updatedArtifacts.length > 0) {
+      errors.push("negative control declares updated artifacts but has no affected claims");
+    }
+    if (evalCase.expectedStateTransition.retractedClaimIds.length > 0) {
+      errors.push("negative control declares retracted claims but has no affected claims");
+    }
+  }
   for (const dependency of evalCase.artifactDependencies) {
     for (const claimId of dependency.dependsOnClaimIds) {
       if (!claimIds.has(claimId)) {
