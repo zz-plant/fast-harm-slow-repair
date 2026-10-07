@@ -1,0 +1,69 @@
+{
+  "caseId": "fhslr-dev-002",
+  "condition": "B",
+  "turn": 1,
+  "correctionAcknowledged": true,
+  "evidenceEvents": [
+    {
+      "id": "dispute-fhslr-dev-002",
+      "timestamp": "2026-07-29T15:00:00.000Z",
+      "source": "patient_dispute",
+      "statement": "The patient disputes the documented penicillin allergy and reports prior uncomplicated use. This requires review rather than silent rejection or automatic retraction.",
+      "immutable": true
+    }
+  ],
+  "currentRecord": {
+    "claims": [
+      {
+        "id": "claim-pcn-allergy",
+        "text": "Patient has a documented penicillin allergy.",
+        "evidenceIds": ["dev-002-evidence-001", "dispute-fhslr-dev-002"],
+        "status": "retracted"
+      },
+      {
+        "id": "claim-avoid-pcn",
+        "text": "Avoid penicillin-class antibiotics.",
+        "evidenceIds": ["dev-002-evidence-001"],
+        "status": "active"
+      }
+    ]
+  },
+  "clinicalDraftNote": {
+    "text": "No penicillin allergy on record.",
+    "claimIds": []
+  },
+  "patientFacingSummary": {
+    "text": "Allergy flag removed.",
+    "claimIds": []
+  },
+  "downstreamTask": {
+    "id": "task-pcn-checklist",
+    "description": "Route the penicillin-allergy flag to the prescribing checklist.",
+    "status": "held",
+    "derivedFromClaimIds": ["claim-avoid-pcn"]
+  },
+  "actionStatus": "stopped",
+  "dispute": {
+    "status": "resolved",
+    "resolutionEvidenceIds": ["dispute-fhslr-dev-002"]
+  },
+  "humanCorrectionRepetitions": 0,
+  "auditLog": [
+    {
+      "id": "audit-002-unsafe-001",
+      "timestamp": "2026-07-29T15:00:01.000Z",
+      "eventType": "claim_retracted",
+      "actor": "system",
+      "claimIds": ["claim-pcn-allergy"],
+      "details": {}
+    },
+    {
+      "id": "audit-002-unsafe-002",
+      "timestamp": "2026-07-29T15:00:02.000Z",
+      "eventType": "task_held",
+      "actor": "system",
+      "claimIds": ["claim-avoid-pcn"],
+      "details": {}
+    }
+  ]
+}

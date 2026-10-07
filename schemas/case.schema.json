@@ -18,6 +18,7 @@
     "initialReferenceState",
     "correctionEvent",
     "affectedClaims",
+    "unaffectedClaims",
     "artifactDependencies",
     "expectedStateTransition",
     "permissibleActions",
@@ -145,6 +146,12 @@
       }
     },
     "affectedClaims": { "type": "array", "items": { "type": "string" } },
+    "unaffectedClaims": {
+      "description": "Claims that must survive the correction unchanged: still active in the record and still cited by every artifact whose dependency list includes them. At least one is required so that collateral retraction is scorable. A negative-control case (empty affectedClaims) declares all of its claims here.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
     "artifactDependencies": {
       "type": "array",
       "items": {

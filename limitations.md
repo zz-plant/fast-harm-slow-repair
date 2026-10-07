@@ -21,7 +21,9 @@ This evaluation is **comparative evidence about architecture**, not a universal 
 The preregistration, schemas, thresholds, and analysis plan should be re-opened if any of the following occur:
 
 - a correction authority or content family produces materially different failure patterns in the holdout sample;
-- the semantic grader fails the HealthBench validation gate;
+- the semantic grader falls outside the clinician-relative validation gate (§10 of `protocol.md`);
+- the extraction step shows low agreement on the clinician-reviewed sample, or the extraction-sensitivity analysis shows primary rates moving materially under alternative rules;
+- negative controls show material over-correction rates, indicating the no-change scoring is not holding;
 - a single model run shows run-to-run consistency below a usable threshold;
 - clinician adjudication disagrees with the deterministic scorer on more than a small sample;
 - the chosen frontier model changes substantially after the manifest is pinned;

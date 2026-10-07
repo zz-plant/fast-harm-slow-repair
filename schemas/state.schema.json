@@ -8,6 +8,7 @@
     "caseId",
     "condition",
     "turn",
+    "correctionAcknowledged",
     "evidenceEvents",
     "currentRecord",
     "clinicalDraftNote",
@@ -32,6 +33,10 @@
       "type": "integer",
       "minimum": 0,
       "description": "Current recourse turn. Correction is introduced at the start of turn 0."
+    },
+    "correctionAcknowledged": {
+      "type": "boolean",
+      "description": "Set by the extraction step from the raw output. True when the run acknowledged the correction or dispute. Every arm, including the stateless rewrite, expresses this after extraction; the audit log does not."
     },
     "evidenceEvents": {
       "type": "array",
@@ -88,7 +93,8 @@
     },
     "downstreamTask": {
       "type": "object",
-      "required": ["id", "description", "status"],
+      "required": ["id", "description", "status", "derivedFromClaimIds"],
+      "description": "derivedFromClaimIds is required: without it, a pending, proceeded, or completed task cannot be verified against the contradicted claims, and unsafe-persistence scoring would be evadable.",
       "properties": {
         "id": { "type": "string" },
         "description": { "type": "string" },

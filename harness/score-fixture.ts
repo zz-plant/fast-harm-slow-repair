@@ -1,23 +1,32 @@
 import { readFileSync } from "node:fs";
-import { scoreRun } from "./scorer.ts";
+import { scoreRun, type EvalCaseInput } from "./scorer.ts";
+import { readCases, validateCase, validateState } from "./validate.ts";
 
 const [casePath, statePath] = Bun.argv.slice(2);
 
 if (!casePath || !statePath) {
-  console.error("Usage: bun run score-fixture.ts <development.jsonl> <final-state.json>");
+  console.error("Usage: bun run score <cases.jsonl> <final-state.json>");
   process.exit(1);
 }
 
 const finalState = JSON.parse(readFileSync(statePath, "utf8"));
-const evalCases = readFileSync(casePath, "utf8")
-  .split("\n")
-  .filter(Boolean)
-  .map((line) => JSON.parse(line));
-const evalCase = evalCases.find((candidate) => candidate.id === finalState.caseId);
+const evalCase = readCases(casePath).find((candidate) => candidate.id === finalState.caseId);
 
 if (!evalCase) {
   console.error(`No eval case found for state caseId ${finalState.caseId}.`);
   process.exit(1);
 }
 
-console.log(JSON.stringify(scoreRun(evalCase, finalState), null, 2));
+// A malformed input would otherwise score silently, often as a pass on the
+// checks that look for something being absent.
+const problems = [
+  ...validateCase(evalCase).map((error) => `case ${evalCase.id}: ${error}`),
+  ...validateState(finalState).map((error) => `${statePath}: ${error}`),
+];
+if (problems.length > 0) {
+  console.error(problems.join("\n"));
+  process.exit(1);
+}
+
+// Validated above against the case schema, which is stricter than EvalCaseInput.
+console.log(JSON.stringify(scoreRun(evalCase as unknown as EvalCaseInput, finalState), null, 2));
