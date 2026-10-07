@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://kanav.net/evals/fast-harm-slow-repair/schemas/case.schema.json",
+  "$id": "https://raw.githubusercontent.com/zz-plant/fast-harm-slow-repair/main/schemas/case.schema.json",
   "title": "Fast Harm, Slow Repair — Eval Case",
   "description": "A single test case specifying an initial state, a correction event, expected transitions, and scoring rules.",
   "type": "object",

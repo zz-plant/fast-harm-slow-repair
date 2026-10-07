@@ -26,8 +26,9 @@ describe("fast-harm-slow-repair eval protocol", () => {
   test("schemas are valid JSON", () => {
     const state = JSON.parse(read("schemas/state.schema.json"));
     const caseSchema = JSON.parse(read("schemas/case.schema.json"));
-    expect(state.$id).toContain("kanav.net");
-    expect(caseSchema.$id).toContain("kanav.net");
+    const host = "https://raw.githubusercontent.com/zz-plant/fast-harm-slow-repair/main/schemas/";
+    expect(state.$id).toBe(`${host}state.schema.json`);
+    expect(caseSchema.$id).toBe(`${host}case.schema.json`);
   });
 
   test("schemas expose every field required by deterministic scoring", () => {

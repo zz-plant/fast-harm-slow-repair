@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://kanav.net/evals/fast-harm-slow-repair/schemas/state.schema.json",
+  "$id": "https://raw.githubusercontent.com/zz-plant/fast-harm-slow-repair/main/schemas/state.schema.json",
   "title": "Fast Harm, Slow Repair — System State",
   "description": "Runtime state for one trajectory through the simulated documentation and care-coordination workflow.",
   "type": "object",
