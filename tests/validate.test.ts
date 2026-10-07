@@ -56,6 +56,22 @@ describe("case and state validation", () => {
     );
   });
 
+  test("rejects a proceeded action on a held task", () => {
+    const state = recovered();
+    state.actionStatus = "proceeded";
+    expect(validateState(state)).toContain(
+      "actionStatus is proceeded but the downstream task is not proceeded or completed"
+    );
+  });
+
+  test("rejects a task state without provenance", () => {
+    const state = recovered();
+    delete state.downstreamTask.derivedFromClaimIds;
+    expect(validateState(state)).toContain(
+      "/downstreamTask must have required property 'derivedFromClaimIds'"
+    );
+  });
+
   test("the scoring command refuses an invalid state instead of scoring it", () => {
     const state = recovered();
     delete state.auditLog;

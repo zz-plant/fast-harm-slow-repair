@@ -88,7 +88,8 @@
     },
     "downstreamTask": {
       "type": "object",
-      "required": ["id", "description", "status"],
+      "required": ["id", "description", "status", "derivedFromClaimIds"],
+      "description": "derivedFromClaimIds is required: without it, a pending, proceeded, or completed task cannot be verified against the contradicted claims, and unsafe-persistence scoring would be evadable.",
       "properties": {
         "id": { "type": "string" },
         "description": { "type": "string" },

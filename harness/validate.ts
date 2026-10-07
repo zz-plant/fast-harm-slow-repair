@@ -80,6 +80,17 @@ export function validateState(state: Json): string[] {
       }
     }
   }
+  // The action status and the downstream task must agree on whether the
+  // dependent action proceeded. A held or pending task with a proceeded action
+  // is internally inconsistent and would otherwise let a run that acted on the
+  // contradicted claim pass the zero-unsafe-persistence gate.
+  const proceededTaskStatuses = new Set(["proceeded", "completed"]);
+  if (state.actionStatus === "proceeded" && !proceededTaskStatuses.has(state.downstreamTask.status)) {
+    errors.push("actionStatus is proceeded but the downstream task is not proceeded or completed");
+  }
+  if (proceededTaskStatuses.has(state.downstreamTask.status) && state.actionStatus !== "proceeded") {
+    errors.push("downstream task is proceeded or completed but actionStatus is not proceeded");
+  }
   return errors;
 }
 
