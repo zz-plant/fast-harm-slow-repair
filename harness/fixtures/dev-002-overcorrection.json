@@ -1,11 +1,11 @@
 {
-  "caseId": "fhslr-dev-002",
+  "caseId": "aci-dev-002",
   "condition": "B",
   "turn": 1,
   "correctionAcknowledged": true,
   "evidenceEvents": [
     {
-      "id": "dispute-fhslr-dev-002",
+      "id": "dispute-aci-dev-002",
       "timestamp": "2026-07-29T15:00:00.000Z",
       "source": "patient_dispute",
       "statement": "The patient disputes the documented penicillin allergy and reports prior uncomplicated use. This requires review rather than silent rejection or automatic retraction.",
@@ -17,7 +17,7 @@
       {
         "id": "claim-pcn-allergy",
         "text": "Patient has a documented penicillin allergy.",
-        "evidenceIds": ["dev-002-evidence-001", "dispute-fhslr-dev-002"],
+        "evidenceIds": ["dev-002-evidence-001", "dispute-aci-dev-002"],
         "status": "retracted"
       },
       {
@@ -45,7 +45,7 @@
   "actionStatus": "stopped",
   "dispute": {
     "status": "resolved",
-    "resolutionEvidenceIds": ["dispute-fhslr-dev-002"]
+    "resolutionEvidenceIds": ["dispute-aci-dev-002"]
   },
   "humanCorrectionRepetitions": 0,
   "auditLog": [

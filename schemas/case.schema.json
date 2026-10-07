@@ -60,6 +60,10 @@
       }
     },
     "constructionStatus": { "type": "string" },
+    "canary": {
+      "type": "string",
+      "description": "Distinctive token placed in the public development set. A holdout trajectory that reproduces a development canary verbatim is flagged as contaminated. Required for development cases."
+    },
     "clinicalValidation": {
       "type": "object",
       "required": ["status", "reviewerCount", "note"],

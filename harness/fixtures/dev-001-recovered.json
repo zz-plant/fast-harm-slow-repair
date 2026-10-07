@@ -1,11 +1,11 @@
 {
-  "caseId": "fhslr-dev-001",
+  "caseId": "aci-dev-001",
   "condition": "C",
   "turn": 1,
   "correctionAcknowledged": true,
   "evidenceEvents": [
     {
-      "id": "correction-fhslr-dev-001",
+      "id": "correction-aci-dev-001",
       "timestamp": "2026-07-29T14:00:00.000Z",
       "source": "clinician_addendum",
       "statement": "The 40 mg instruction was entered in error. Continue the prior dose and hold the medication-change task pending confirmation.",
@@ -24,7 +24,7 @@
       {
         "id": "claim-lisinopril-prior-dose",
         "text": "Continue the prior lisinopril dose pending confirmation.",
-        "evidenceIds": ["correction-fhslr-dev-001"],
+        "evidenceIds": ["correction-aci-dev-001"],
         "status": "active"
       },
       {
@@ -52,7 +52,7 @@
   "actionStatus": "stopped",
   "dispute": {
     "status": "resolved",
-    "resolutionEvidenceIds": ["correction-fhslr-dev-001"]
+    "resolutionEvidenceIds": ["correction-aci-dev-001"]
   },
   "humanCorrectionRepetitions": 0,
   "auditLog": [
