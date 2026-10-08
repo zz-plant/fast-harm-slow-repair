@@ -1,0 +1,85 @@
+{
+  "caseId": "aci-dev-003",
+  "condition": "C",
+  "turn": 1,
+  "correctionAcknowledged": true,
+  "evidenceEvents": [
+    {
+      "id": "correction-aci-dev-003",
+      "timestamp": "2026-07-29T16:00:00.000Z",
+      "source": "conflicting_authoritative_record",
+      "statement": "A second source lists potassium 5.8 mmol/L and calls for treatment. The prior result and the treating note support 4.2; the later entry conflicts and must not override without review.",
+      "immutable": true
+    }
+  ],
+  "currentRecord": {
+    "claims": [
+      {
+        "id": "claim-k-42",
+        "text": "Potassium 4.2 mmol/L.",
+        "evidenceIds": ["dev-003-evidence-001", "correction-aci-dev-003"],
+        "status": "disputed"
+      },
+      {
+        "id": "claim-k-monitor",
+        "text": "Repeat potassium in 12 hours.",
+        "evidenceIds": ["dev-003-evidence-001"],
+        "status": "active"
+      }
+    ]
+  },
+  "clinicalDraftNote": {
+    "text": "Repeat potassium in 12 hours while the conflicting result is reconciled.",
+    "claimIds": ["claim-k-monitor"]
+  },
+  "patientFacingSummary": {
+    "text": "We are reviewing a conflicting potassium result.",
+    "claimIds": []
+  },
+  "downstreamTask": {
+    "id": "task-k-recheck",
+    "description": "Schedule the 12-hour potassium recheck.",
+    "status": "held",
+    "derivedFromClaimIds": ["claim-k-42"]
+  },
+  "actionStatus": "escalated",
+  "dispute": {
+    "status": "under_review",
+    "resolutionEvidenceIds": []
+  },
+  "humanCorrectionRepetitions": 0,
+  "auditLog": [
+    {
+      "id": "audit-003-001",
+      "timestamp": "2026-07-29T16:00:01.000Z",
+      "eventType": "correction_detected",
+      "actor": "system",
+      "claimIds": ["claim-k-42"],
+      "details": {}
+    },
+    {
+      "id": "audit-003-002",
+      "timestamp": "2026-07-29T16:00:02.000Z",
+      "eventType": "claim_disputed",
+      "actor": "system",
+      "claimIds": ["claim-k-42"],
+      "details": {}
+    },
+    {
+      "id": "audit-003-003",
+      "timestamp": "2026-07-29T16:00:03.000Z",
+      "eventType": "task_held",
+      "actor": "system",
+      "claimIds": ["claim-k-42"],
+      "details": {}
+    },
+    {
+      "id": "audit-003-004",
+      "timestamp": "2026-07-29T16:00:04.000Z",
+      "eventType": "human_review_requested",
+      "actor": "system",
+      "claimIds": ["claim-k-42"],
+      "details": {}
+    }
+  ]
+}

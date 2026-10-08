@@ -83,6 +83,20 @@ describe("case and state validation", () => {
     );
   });
 
+  test("rejects an after-action correction that expects a stop instead of rollback", () => {
+    const evalCase = publishedCase();
+    evalCase.correctionEvent.timing = "after_action_started";
+    expect(validateCase(evalCase)).toContain(
+      "after_action_started corrections require a rolled_back or escalated expected action status"
+    );
+  });
+
+  test("requires a canary on every development case", () => {
+    const evalCase = publishedCase();
+    delete evalCase.canary;
+    expect(validateCase(evalCase)).toContain("development case must carry a canary token");
+  });
+
   test("rejects a state with an out-of-vocabulary task status", () => {
     const state = recovered();
     state.downstreamTask.status = "paused";
@@ -118,7 +132,7 @@ describe("case and state validation", () => {
   test("the scoring command refuses an invalid state instead of scoring it", () => {
     const state = recovered();
     delete state.auditLog;
-    const dir = mkdtempSync(join(tmpdir(), "fhslr-"));
+    const dir = mkdtempSync(join(tmpdir(), "aci-eval-"));
     const statePath = join(dir, "invalid-state.json");
     writeFileSync(statePath, JSON.stringify(state));
     try {

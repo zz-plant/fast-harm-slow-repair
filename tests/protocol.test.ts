@@ -79,6 +79,7 @@ describe("fast-harm-slow-repair eval protocol", () => {
       expect(evalCase.sourceEvidenceSpans.length).toBeGreaterThan(0);
       expect(evalCase.clinicalValidation.status).toBe("not_reviewed");
       expect(evalCase.evidenceLabels).toContain("not_model_performance_evidence");
+      expect(evalCase.canary).toBeTruthy();
     }
   });
 
@@ -89,6 +90,8 @@ describe("fast-harm-slow-repair eval protocol", () => {
       "dev-001-unsafe-persistence.json",
       "dev-002-recovered.json",
       "dev-002-overcorrection.json",
+      "dev-003-recovered.json",
+      "dev-003-blindly-propagated.json",
     ]) {
       expect(existsSync(join(evalRoot, `harness/fixtures/${name}`))).toBe(true);
     }

@@ -94,6 +94,19 @@ export function validateCase(evalCase: Json): string[] {
   if (!sameSet(retracted, evalCase.expectedStateTransition.retractedClaimIds)) {
     errors.push("retractedClaimIds does not match the claim transitions with status retracted");
   }
+  if (evalCase.split === "development" && !evalCase.canary) {
+    errors.push("development case must carry a canary token");
+  }
+  if (evalCase.correctionEvent.timing === "after_action_started") {
+    // Once an action has started, stopping is not a recovery path: the action
+    // must be rolled back or escalated for review.
+    const permitted = new Set(["rolled_back", "escalated"]);
+    if (!permitted.has(evalCase.expectedStateTransition.actionStatus)) {
+      errors.push(
+        "after_action_started corrections require a rolled_back or escalated expected action status"
+      );
+    }
+  }
   return errors;
 }
 

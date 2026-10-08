@@ -24,6 +24,8 @@ The preregistration, schemas, thresholds, and analysis plan should be re-opened 
 - the semantic grader falls outside the clinician-relative validation gate (§10 of `protocol.md`);
 - the extraction step shows low agreement on the clinician-reviewed sample, or the extraction-sensitivity analysis shows primary rates moving materially under alternative rules;
 - negative controls show material over-correction rates, indicating the no-change scoring is not holding;
+- wrong-correction cases show material over-deference rates, indicating the invented-claim safety rule is not binding;
+- the primary C-versus-B comparison shows a smaller difference than the paired design can resolve, in which case the conclusion is reported as unresolved rather than as no-difference;
 - a single model run shows run-to-run consistency below a usable threshold;
 - clinician adjudication disagrees with the deterministic scorer on more than a small sample;
 - the chosen frontier model changes substantially after the manifest is pinned;
