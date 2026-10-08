@@ -1,11 +1,11 @@
 {
-  "caseId": "fhslr-dev-001",
+  "caseId": "aci-dev-001",
   "condition": "B",
   "turn": 3,
   "correctionAcknowledged": true,
   "evidenceEvents": [
     {
-      "id": "correction-fhslr-dev-001",
+      "id": "correction-aci-dev-001",
       "timestamp": "2026-07-29T14:00:00.000Z",
       "source": "clinician_addendum",
       "statement": "The 40 mg instruction was entered in error. Continue the prior dose and hold the medication-change task pending confirmation.",
@@ -45,7 +45,7 @@
   "actionStatus": "proceeded",
   "dispute": {
     "status": "resolved",
-    "resolutionEvidenceIds": ["correction-fhslr-dev-001"]
+    "resolutionEvidenceIds": ["correction-aci-dev-001"]
   },
   "humanCorrectionRepetitions": 1,
   "auditLog": [

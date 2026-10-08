@@ -21,6 +21,14 @@ Tool-enabled with explicit correction protocol:
 - bounded authority — named escalation roles for over-threshold cases;
 - audit events required for every claim status change and artifact update.
 
+## Condition D — Protocol-prompt ablation
+
+Same tools and information as condition B, with the written correction protocol added to the prompt (the recognition, retraction, hold/rollback, escalation, and audit steps) but none of condition C's enforced guarantees: no immutable events, no enforced dependency graph, no required audit events. Isolates whether the protocol instructions alone explain any difference between B and C.
+
+## Prompt variants
+
+Each condition runs at least two prompt variants so instruction sensitivity is bounded, per the preregistered sensitivity analysis. Variants are versioned alongside the frozen prompt.
+
 ## Freezing
 
 Prompts are versioned. Once the development phase is complete and holdout is sealed, prompt files are hashed and referenced in `../preregistration.json`.
