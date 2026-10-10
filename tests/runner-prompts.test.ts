@@ -9,7 +9,7 @@ import {
 
 const evalRoot = new URL("../", import.meta.url).pathname;
 const cases = readCases(`${evalRoot}data/development.jsonl`);
-const canaries = cases.map((evalCase) => evalCase.canary as string);
+const canaries = cases.map((evalCase) => evalCase.canary ?? "");
 
 describe("condition-A prompt construction", () => {
   for (const evalCase of cases) {

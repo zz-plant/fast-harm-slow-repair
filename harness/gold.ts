@@ -3,6 +3,7 @@ import type {
   EvalCaseInput,
   FinalStateInput,
 } from "./scorer.ts";
+import type { EvalCase } from "../schemas/types.ts";
 
 /**
  * Gold-case inputs: the fields the oracle needs beyond what the scorer uses.
@@ -34,7 +35,7 @@ export interface GoldCase {
 }
 
 /** Builds a GoldCase from a committed JSON case, as read by `readCases`. */
-export function goldCaseFromJson(evalCase: Record<string, any>): GoldCase {
+export function goldCaseFromJson(evalCase: EvalCase): GoldCase {
   return {
     id: evalCase.id,
     authorityCondition: evalCase.authorityCondition,
@@ -44,7 +45,7 @@ export function goldCaseFromJson(evalCase: Record<string, any>): GoldCase {
       source: evalCase.correctionEvent.source,
       affectedClaimIds: evalCase.correctionEvent.affectedClaimIds,
     },
-    initialClaims: evalCase.initialReferenceState.claims.map((claim: Record<string, any>) => ({
+    initialClaims: evalCase.initialReferenceState.claims.map((claim) => ({
       id: claim.id,
       text: claim.text,
       evidenceIds: claim.evidenceIds,

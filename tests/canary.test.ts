@@ -4,7 +4,7 @@ import { readCases } from "../harness/validate.ts";
 
 const evalRoot = new URL("../", import.meta.url).pathname;
 const cases = readCases(`${evalRoot}data/development.jsonl`);
-const canaries = cases.map((evalCase: Record<string, any>) => evalCase.canary);
+const canaries = cases.map((evalCase) => evalCase.canary ?? "");
 
 describe("contamination canary scan", () => {
   test("flags a holdout trajectory that reproduces a development canary", () => {
@@ -24,7 +24,7 @@ describe("contamination canary scan", () => {
     // Sanity check: each case's own text carries its canary, so the scan works.
     for (const evalCase of cases) {
       const found = findCanaryMatches(JSON.stringify(evalCase), canaries);
-      expect(found).toContain(evalCase.canary);
+      expect(found).toContain(evalCase.canary ?? "");
     }
   });
 });

@@ -1,6 +1,5 @@
 import { readCases } from "./validate.ts";
-
-type Json = Record<string, any>;
+import type { EvalCase } from "../schemas/types.ts";
 
 /**
  * Prompt-construction contract (ABC T.5).
@@ -42,7 +41,7 @@ export interface PublicCaseView {
   transcriptId: string;
   source: { name: string; license: string; citation: string };
   evidence: Array<{ artifact: string; excerpt: string }>;
-  initialState: Json;
+  initialState: EvalCase["initialReferenceState"];
   correction: { id: string; source: string; statement: string; timing?: string };
 }
 
@@ -51,8 +50,8 @@ export interface PublicCaseView {
  * function the (planned) prompt builder must call; nothing else may read the
  * case into a prompt directly.
  */
-export function publicCaseView(evalCase: Json): PublicCaseView {
-  const spans: Json[] = evalCase.sourceEvidenceSpans ?? [];
+export function publicCaseView(evalCase: EvalCase): PublicCaseView {
+  const spans = evalCase.sourceEvidenceSpans ?? [];
   return {
     caseId: evalCase.id,
     transcriptId: evalCase.transcriptId,
@@ -123,7 +122,7 @@ export interface PromptAuditRecord {
 }
 
 /** Audits every committed case's public projection for ground-truth leakage. */
-export function auditPromptLeakage(cases: Json[]): PromptAuditRecord[] {
+export function auditPromptLeakage(cases: EvalCase[]): PromptAuditRecord[] {
   return cases.map((evalCase) => ({
     caseId: evalCase.id,
     excludedKeysFound: findExcludedKeys(publicCaseView(evalCase)),
