@@ -107,6 +107,14 @@ export function validateCase(evalCase: Json): string[] {
       );
     }
   }
+  if (evalCase.expectedDisputeStatus === "resolved") {
+    const anyDisputed = transitions.some((t: Json) => t.status === "disputed");
+    if (anyDisputed) {
+      errors.push(
+        "expectedDisputeStatus is resolved but the case has a claim transition to disputed; a disputed claim keeps the question under review"
+      );
+    }
+  }
   return errors;
 }
 

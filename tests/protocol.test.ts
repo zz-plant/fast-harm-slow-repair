@@ -49,6 +49,7 @@ describe("fast-harm-slow-repair eval protocol", () => {
 
     expect(caseSchema.properties.correctionEvent.required).toContain("id");
     expect(caseSchema.properties.expectedStateTransition.required).toContain("claimTransitions");
+    expect(Object.keys(caseSchema.properties)).toContain("expectedDisputeStatus");
     expect(caseSchema.required).toContain("sourceDataset");
     expect(caseSchema.required).toContain("sourceEvidenceSpans");
     expect(caseSchema.required).toContain("clinicalValidation");
