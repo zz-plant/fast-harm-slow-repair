@@ -1,29 +1,14 @@
-import type { PublicCaseView } from "../prompt.ts";
+import { PROMPT_EXCLUDED_FIELDS, type PublicCaseView } from "../prompt.ts";
 import type { ChatMessage } from "./workers-ai.ts";
 
 /**
- * Ground-truth field names that must never appear in a prompt. The prompt is
- * built only from `publicCaseView`, so this is belt-and-braces: if a refactor
- * ever routes a scoring field into the prompt text, this throws at run time
- * instead of quietly leaking the answer.
+ * Ground-truth field names that must never appear in a prompt. Single-sourced
+ * from the isolation contract's excluded fields: every field the public
+ * projection strips is a marker here, so the two lists cannot drift. If a
+ * refactor ever routes one of them into the prompt text, this throws at run
+ * time instead of quietly leaking the answer.
  */
-const GROUND_TRUTH_MARKERS = [
-  "expectedStateTransition",
-  "affectedClaims",
-  "unaffectedClaims",
-  "affectedClaimIds",
-  "artifactDependencies",
-  "permissibleActions",
-  "forbiddenActions",
-  "severityTier",
-  "authorityCondition",
-  "contentFamily",
-  "clinicalValidation",
-  "constructionStatus",
-  "evidenceLabels",
-  "maxRecourseTurnBudget",
-  "sourceEvidenceSpans",
-];
+const GROUND_TRUTH_MARKERS: readonly string[] = PROMPT_EXCLUDED_FIELDS;
 
 /**
  * Condition A: stateless rewrite. The model receives the record, the evidence
