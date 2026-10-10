@@ -29,4 +29,5 @@ if (problems.length > 0) {
 }
 
 // Validated above against the case schema, which is stricter than EvalCaseInput.
-console.log(JSON.stringify(scoreRun(evalCase as unknown as EvalCaseInput, finalState), null, 2));
+// The schema-derived type is structurally assignable to the scorer input.
+console.log(JSON.stringify(scoreRun(evalCase, finalState), null, 2));

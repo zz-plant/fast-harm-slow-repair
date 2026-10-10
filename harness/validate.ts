@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import type { EvalCase } from "../schemas/types.ts";
 
 const root = new URL("../", import.meta.url);
 const readJson = (path: string) => JSON.parse(readFileSync(new URL(path, root), "utf8"));
@@ -27,20 +28,23 @@ const sameSet = (a: string[], b: string[]) =>
  * scorer relies on but the schema cannot express. Returns one message per
  * problem; an empty list means the case is usable.
  */
-export function validateCase(evalCase: Json): string[] {
+export function validateCase(evalCase: EvalCase | Json): string[] {
   const errors = schemaErrors(caseSchema, evalCase);
   if (errors.length > 0) return errors;
 
+  // The cross-field rules only run on schema-valid cases, so the union can be
+  // narrowed once: `Json` widens every access to `any`.
+  const e = evalCase as EvalCase;
   const claimIds = new Set<string>(
-    evalCase.initialReferenceState.claims.map((claim: Json) => claim.id)
+    e.initialReferenceState.claims.map((claim) => claim.id)
   );
-  const transitions: Json[] = evalCase.expectedStateTransition.claimTransitions;
+  const transitions: Json[] = e.expectedStateTransition.claimTransitions;
   const transitionFor = (claimId: string) => transitions.find((t) => t.claimId === claimId);
 
-  if (!sameSet(evalCase.affectedClaims, evalCase.correctionEvent.affectedClaimIds)) {
+  if (!sameSet(e.affectedClaims, e.correctionEvent.affectedClaimIds)) {
     errors.push("affectedClaims and correctionEvent.affectedClaimIds name different claims");
   }
-  for (const claimId of evalCase.affectedClaims) {
+  for (const claimId of e.affectedClaims) {
     if (!claimIds.has(claimId)) {
       errors.push(`affected claim ${claimId} is not in initialReferenceState.claims`);
     }
@@ -48,11 +52,11 @@ export function validateCase(evalCase: Json): string[] {
       errors.push(`affected claim ${claimId} has no expected claim transition`);
     }
   }
-  for (const claimId of evalCase.unaffectedClaims) {
+  for (const claimId of e.unaffectedClaims) {
     if (!claimIds.has(claimId)) {
       errors.push(`unaffected claim ${claimId} is not in initialReferenceState.claims`);
     }
-    if (evalCase.affectedClaims.includes(claimId)) {
+    if (e.affectedClaims.includes(claimId)) {
       errors.push(`claim ${claimId} is listed as both affected and unaffected`);
     }
     if (transitionFor(claimId)) {
@@ -65,25 +69,25 @@ export function validateCase(evalCase: Json): string[] {
   // introduced by the correction: a new claim, not an initial one. Unaffected
   // initial claims must stay active, which is what the scorer enforces.
   for (const transition of transitions) {
-    if (!evalCase.affectedClaims.includes(transition.claimId) && claimIds.has(transition.claimId)) {
+    if (!e.affectedClaims.includes(transition.claimId) && claimIds.has(transition.claimId)) {
       errors.push(
         `transitioned claim ${transition.claimId} is an initial claim that is not affected`
       );
     }
   }
-  if (evalCase.affectedClaims.length === 0) {
+  if (e.affectedClaims.length === 0) {
     // Negative control: the correction must not propagate at all.
     if (transitions.length > 0) {
       errors.push("negative control declares claim transitions but has no affected claims");
     }
-    if (evalCase.expectedStateTransition.updatedArtifacts.length > 0) {
+    if (e.expectedStateTransition.updatedArtifacts.length > 0) {
       errors.push("negative control declares updated artifacts but has no affected claims");
     }
-    if (evalCase.expectedStateTransition.retractedClaimIds.length > 0) {
+    if (e.expectedStateTransition.retractedClaimIds.length > 0) {
       errors.push("negative control declares retracted claims but has no affected claims");
     }
   }
-  for (const dependency of evalCase.artifactDependencies) {
+  for (const dependency of e.artifactDependencies) {
     for (const claimId of dependency.dependsOnClaimIds) {
       if (!claimIds.has(claimId)) {
         errors.push(`${dependency.artifact} depends on ${claimId}, which is not an initial claim`);
@@ -91,24 +95,24 @@ export function validateCase(evalCase: Json): string[] {
     }
   }
   const retracted = transitions.filter((t) => t.status === "retracted").map((t) => t.claimId);
-  if (!sameSet(retracted, evalCase.expectedStateTransition.retractedClaimIds)) {
+  if (!sameSet(retracted, e.expectedStateTransition.retractedClaimIds)) {
     errors.push("retractedClaimIds does not match the claim transitions with status retracted");
   }
-  if (evalCase.split === "development" && !evalCase.canary) {
+  if (e.split === "development" && !e.canary) {
     errors.push("development case must carry a canary token");
   }
-  if (evalCase.correctionEvent.timing === "after_action_started") {
+  if (e.correctionEvent.timing === "after_action_started") {
     // Once an action has started, stopping is not a recovery path: the action
     // must be rolled back or escalated for review.
     const permitted = new Set(["rolled_back", "escalated"]);
-    if (!permitted.has(evalCase.expectedStateTransition.actionStatus)) {
+    if (!permitted.has(e.expectedStateTransition.actionStatus)) {
       errors.push(
         "after_action_started corrections require a rolled_back or escalated expected action status"
       );
     }
   }
-  if (evalCase.expectedDisputeStatus === "resolved") {
-    const anyDisputed = transitions.some((t: Json) => t.status === "disputed");
+  if (e.expectedDisputeStatus === "resolved") {
+    const anyDisputed = transitions.some((t) => t.status === "disputed");
     if (anyDisputed) {
       errors.push(
         "expectedDisputeStatus is resolved but the case has a claim transition to disputed; a disputed claim keeps the question under review"
@@ -151,13 +155,13 @@ export function validateState(state: Json): string[] {
 }
 
 /** Reads a JSONL file of eval cases, one object per non-empty line. */
-export function readCases(path: string): Json[] {
+export function readCases<T = EvalCase>(path: string): T[] {
   return readFileSync(path, "utf8")
     .split("\n")
     .filter((line) => line.trim() !== "")
     .map((line, index) => {
       try {
-        return JSON.parse(line);
+        return JSON.parse(line) as T;
       } catch {
         throw new Error(`${path}:${index + 1} is not valid JSON`);
       }

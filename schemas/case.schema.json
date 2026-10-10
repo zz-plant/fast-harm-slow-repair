@@ -119,7 +119,23 @@
       "type": "object",
       "required": ["claims", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"],
       "properties": {
-        "claims": { "type": "array", "items": { "type": "object" } },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "evidenceIds", "status"],
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "evidenceIds": { "type": "array", "items": { "type": "string" } },
+              "status": {
+                "type": "string",
+                "enum": ["active", "disputed", "retracted", "replaced"]
+              },
+              "replacementId": { "type": "string" }
+            }
+          }
+        },
         "clinicalDraftNote": { "type": "string" },
         "patientFacingSummary": { "type": "string" },
         "downstreamTask": {
