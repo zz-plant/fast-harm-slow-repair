@@ -57,11 +57,12 @@ A run can fail the second without failing the first. Escalating instead of stopp
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=…
 export CLOUDFLARE_API_TOKEN=…   # the pilot never reads credentials from the repo
-bun run pilot                       # 10 models x 3 development cases x 3 runs, condition A
+bun run pilot                       # 9 models x 3 development cases x 3 runs, condition A
 bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
+bun run rescore results/dev-pilot/<timestamp>   # offline re-score of a saved run (no model calls)
 ```
 
-The pilot refuses non-development cases, audits every prompt against the leakage guard, scans outputs for canaries, extracts through one fixed model (with a non-thinking fallback for unparseable output), and writes `results/dev-pilot/<timestamp>/` (trajectories, Inspect logs, summary). Pilot outputs are harness validation, not study data.
+The pilot refuses non-development cases, audits every prompt against the leakage guard, scans outputs for canaries, and extracts through a non-thinking primary model in OpenAI JSON mode — with a fallback model and a validation-repair pass for near-miss output — then writes `results/dev-pilot/<timestamp>/` (trajectories, Inspect logs, summary). Workers AI catalog version ids are resolved and recorded per trajectory so the models are pinned, not drifting. Pilot outputs are harness validation, not study data; the reporting module is shared with the offline re-scorer so scoring-rule changes apply to saved extracted states without re-running models.
 
 `correctionEvent.timing` is validated (an `after_action_started` correction must expect a rolled-back or escalated action) and is baked into each case's expected transition; the harness will use it once it can start an action before the correction arrives.
 
