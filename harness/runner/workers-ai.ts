@@ -23,6 +23,8 @@ export interface ChatCallOptions {
   maxTokens?: number;
   retries?: number;
   timeoutMs?: number;
+  /** OpenAI-compatible JSON mode; honored by most Workers AI chat models. */
+  responseFormat?: { type: "json_object" };
 }
 
 export interface ChatResult {
@@ -59,6 +61,7 @@ export function makeWorkersAiClient(config: {
     const body: Record<string, unknown> = { messages };
     if (options.temperature !== undefined) body.temperature = options.temperature;
     if (options.maxTokens !== undefined) body.max_tokens = options.maxTokens;
+    if (options.responseFormat !== undefined) body.response_format = options.responseFormat;
 
     let lastError = "";
     let wasRateLimited = false;
@@ -101,11 +104,12 @@ export function makeWorkersAiClient(config: {
         const rateLimited =
           response.status === 429 ||
           (payload?.errors ?? []).some((error: any) => error?.code === 3021);
+        const timedOut = (payload?.errors ?? []).some((error: any) => error?.code === 3046);
         if (rateLimited) {
           wasRateLimited = true;
           continue;
         }
-        if (response.status >= 500) continue;
+        if (timedOut || response.status >= 500) continue;
         throw new Error(`Workers AI call failed (${model}): ${lastError}`);
       }
       return parseChatResult(model, payload);

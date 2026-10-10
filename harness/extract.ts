@@ -92,9 +92,9 @@ export async function extractFinalState(
           ),
         },
       ],
-      // Thinking-model extraction can take ~2-3 minutes; the JSON needs the
-      // headroom after the reasoning, so the timeout and budget both grow.
-      { temperature: 0, maxTokens: 8192, timeoutMs: 300_000, retries: 1 }
+      // Non-thinking extractors finish fast; JSON mode keeps the reply on the
+      // content channel, and the timeout stays generous for long outputs.
+      { temperature: 0, maxTokens: 8192, timeoutMs: 300_000, retries: 1, responseFormat: { type: "json_object" } }
     );
 
     const parsed = parseJsonObject(response.text);
