@@ -19,7 +19,7 @@ describe("case and state validation", () => {
   });
 
   test("rejects a case missing a required field", () => {
-    const evalCase = publishedCase();
+    const evalCase = { ...publishedCase() } as Record<string, any>;
     delete evalCase.severityTier;
     expect(validateCase(evalCase)).toContain("(root) must have required property 'severityTier'");
   });

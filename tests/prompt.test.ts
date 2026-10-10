@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readCases } from "../harness/validate.ts";
+import type { EvalCase } from "../schemas/types.ts";
 import {
   auditPromptLeakage,
   findExcludedKeys,
@@ -119,7 +120,7 @@ describe("prompt-isolation contract (ABC T.5)", () => {
       const original = publicCaseView(evalCase);
       for (const mutation of groundTruthMutations) {
         test(`${evalCase.id}: ${mutation.name} does not change the prompt view`, () => {
-          expect(publicCaseView(mutation.mutate(evalCase))).toEqual(original);
+          expect(publicCaseView(mutation.mutate(evalCase) as EvalCase)).toEqual(original);
         });
       }
     }
