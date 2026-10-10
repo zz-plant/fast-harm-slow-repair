@@ -1,5 +1,14 @@
+import { readFileSync } from "node:fs";
 import type { ScoredRun } from "../scorer.ts";
 import type { ChatResult } from "./workers-ai.ts";
+
+/** Reads a run's trajectories.jsonl back into records. */
+export function readTrajectories(path: string): TrajectoryRecordOut[] {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line) as TrajectoryRecordOut);
+}
 
 /**
  * One pilot trajectory as written to `trajectories.jsonl`. Shared by the
