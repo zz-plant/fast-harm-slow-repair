@@ -262,12 +262,19 @@ function buildExtractionUserPrompt(
     "Faithfulness rules:",
     "- The REVISED note and summary TEXT determine claims, statuses, and citations. A CORRECTION STATUS or DOWNSTREAM TASK section that narrates a change the revised text does not show must NOT be reflected in the claims or citations.",
     "- Map only what the output actually says; never infer changes the output does not state.",
+    "",
+    "Allowed status values — use exactly these strings, never synonyms:",
+    "- claim status: active | disputed | retracted | replaced",
+    "- downstreamTask.status: pending | held | proceeded | rolled_back | completed",
+    "- actionStatus: pending | stopped | rolled_back | proceeded | escalated",
+    "- dispute.status: open | under_review | resolved",
+    "If the output uses another word, map it to the closest allowed value; never invent values.",
     ...(repairErrors
       ? [
           "",
           "Your previous reply failed validation with these errors:",
           repairErrors,
-          "Output the corrected JSON object only, using exactly the allowed values for every status field.",
+          "Output the corrected JSON object only, using exactly the allowed status values above.",
         ]
       : []),
   ].join("\n");
