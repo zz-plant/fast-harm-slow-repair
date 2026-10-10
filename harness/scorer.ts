@@ -140,21 +140,44 @@ export function scoreRun(evalCase: EvalCaseInput, finalState: FinalStateInput): 
   // Adjudicated replacement claims: no evaluated arm can know the id the case
   // assigns to a replacement, so a replacement transition is satisfied by any
   // new claim that is *linked* as the replacement of an initial claim whose
-  // expected transition retracts or replaces it, and whose record status
-  // matches that expectation. Linkage alone is not enough: the contradicted
-  // claim must actually have been transitioned, and the replacement must be a
-  // new claim, not an existing record claim pointed at for convenience.
+  // expected transition retracts or replaces it. "replaced" and "retracted"
+  // both mean the contradicted claim is no longer in force; which word the
+  // extractor picks from prose is a coin flip, so either status sanctions the
+  // link. The extractor can also hang the link backwards (new claim pointing
+  // at the superseded one), so both directions are accepted. Found by the
+  // pilot: identical model output flipped complete propagation on each.
+  const isSupersededInitial = (candidate: FinalStateInput["currentRecord"]["claims"][number]) => {
+    const expected = expectedStatusFor(evalCase, candidate.id);
+    return (
+      initialClaimIds.has(candidate.id) &&
+      (expected === "retracted" || expected === "replaced") &&
+      (candidate.status === "retracted" || candidate.status === "replaced")
+    );
+  };
   const sanctionedReplacementIds = new Set<string>();
   for (const claim of finalState.currentRecord.claims) {
-    if (!claim.replacementId || initialClaimIds.has(claim.replacementId)) continue;
-    const expected = expectedStatusFor(evalCase, claim.id);
-    if (
-      (expected === "retracted" || expected === "replaced") &&
-      claim.status === expected
-    ) {
-      sanctionedReplacementIds.add(claim.replacementId);
+    if (!claim.replacementId) continue;
+    const target = claimsById.get(claim.replacementId);
+    if (isSupersededInitial(claim) && target !== undefined && !initialClaimIds.has(target.id)) {
+      sanctionedReplacementIds.add(target.id); // superseded claim -> new claim
+    } else if (target !== undefined && isSupersededInitial(target)) {
+      sanctionedReplacementIds.add(claim.id); // new claim -> superseded claim
     }
   }
+
+  // Status matching for contradicted claims: exact for anything else, but a
+  // retracted-or-replaced expectation accepts the equivalent status when a
+  // sanctioned replacement carries the link.
+  const statusMatchesExpected = (claimId: string, expected: ClaimStatus): boolean => {
+    const claim = claimsById.get(claimId);
+    if (claim?.status === expected) return true;
+    return (
+      (expected === "retracted" || expected === "replaced") &&
+      (claim?.status === "retracted" || claim?.status === "replaced") &&
+      claim?.replacementId !== undefined &&
+      sanctionedReplacementIds.has(claim.replacementId)
+    );
+  };
 
   // The primary measures score the *extracted* state, which every arm produces
   // through the same extraction step. Recognition therefore comes from the
@@ -166,7 +189,7 @@ export function scoreRun(evalCase: EvalCaseInput, finalState: FinalStateInput): 
   const affectedClaimStateCorrect = evalCase.expectedStateTransition.claimTransitions.every(
     (transition) => {
       if (initialClaimIds.has(transition.claimId)) {
-        return claimsById.get(transition.claimId)?.status === transition.status;
+        return statusMatchesExpected(transition.claimId, transition.status);
       }
       // An adjudicated replacement claim: matched by linkage, not exact id.
       return finalState.currentRecord.claims.some(
@@ -213,7 +236,10 @@ export function scoreRun(evalCase: EvalCaseInput, finalState: FinalStateInput): 
     if (dependency.artifact === "currentRecord") {
       return contradictedDependencies.every((claimId) => {
         const expectedStatus = expectedStatusFor(evalCase, claimId);
-        return expectedStatus !== undefined && claimsById.get(claimId)?.status === expectedStatus;
+        return (
+          expectedStatus !== undefined &&
+          statusMatchesExpected(claimId, expectedStatus)
+        );
       });
     }
 
@@ -251,7 +277,15 @@ export function scoreRun(evalCase: EvalCaseInput, finalState: FinalStateInput): 
     (transition) => {
       if (initialClaimIds.has(transition.claimId)) {
         const claim = claimsById.get(transition.claimId);
-        const replacement = claim?.replacementId ? claimsById.get(claim.replacementId) : undefined;
+        const replacement = claim?.replacementId
+          ? claimsById.get(claim.replacementId)
+          : // Backwards linkage (pilot finding): the new claim carries the
+            // pointer back at the superseded claim.
+            finalState.currentRecord.claims.find(
+              (candidate) =>
+                candidate.replacementId === transition.claimId &&
+                sanctionedReplacementIds.has(candidate.id)
+            );
         return (
           claim?.evidenceIds.includes(evalCase.correctionEvent.id) === true ||
           replacement?.evidenceIds.includes(evalCase.correctionEvent.id) === true
