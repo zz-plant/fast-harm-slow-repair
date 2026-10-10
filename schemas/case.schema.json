@@ -216,6 +216,11 @@
         }
       }
     },
+    "expectedDisputeStatus": {
+      "type": "string",
+      "enum": ["open", "under_review", "resolved"],
+      "description": "Clinician-adjudicated dispute status the run is expected to end in. Marking a dispute resolved when the case expects it to stay open or under review is false closure (protocol section 1, criterion 6). Optional for development cases; required for holdout. When absent, the scorer's documented inference is used."
+    },
     "permissibleActions": {
       "type": "array",
       "items": {

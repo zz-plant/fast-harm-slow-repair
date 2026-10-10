@@ -8,9 +8,11 @@ Version 0.1 draft · Draft protocol, not yet preregistered
 
 ## Evidence status
 
-**Implemented:** case and state schemas, deterministic scoring, three attributable development cases (one negative control, one wrong-correction case), an extraction contract, and recovered/unsafe-persistence fixtures.
+**Implemented:** case and state schemas, deterministic scoring, three attributable development cases (one negative control, one wrong-correction case), the extraction step (prose → structured state through a fixed extractor model), a Cloudflare Workers AI pilot runner, and recovered/unsafe-persistence fixtures.
 
-**Not yet demonstrated:** model runs, architecture comparisons, clinician validation, grader validation, statistical results, or any healthcare safety conclusion.
+**Demonstrated on development data only:** condition-A model runs through the pilot (`results/dev-pilot/`). These are harness validation — the development cases are not clinically reviewed and the extraction step is not yet validated, so pilot numbers cannot support any claim about architectures, models, or safety.
+
+**Not yet demonstrated:** holdout runs, architecture comparisons, clinician validation, grader validation, statistical results, or any healthcare safety conclusion.
 
 `preregistration.json` remains a draft while `preregisteredAt` is `null`. The protocol will be hashed and frozen only after the development set, harness, prompts, run settings, and analysis code are complete.
 
@@ -99,6 +101,8 @@ Plus secondary measures for detection, rollback, false closure, authority overre
 
 The deterministic scorer in `harness/scorer.ts` computes the three primary measures, unaffected-claim preservation, collateral retraction, unneeded holds, audit-trail quality, and component-level failure flags. It does not yet score every secondary measure, and it does not yet read a case's permissible or forbidden actions.
 
+Property tests in `tests/scorer-properties.test.ts` verify the scorer's specification: reordering a state cannot change its score, the audit log affects only its own measure, and every single fault to a compliant state worsens at least one primary measure. The power and precision figures quoted in `protocol.md` are computed in `analysis/stats.ts` and pinned by tests.
+
 ## Use of results
 
 Version 0.1 will not claim autonomous clinical safety. If the study is completed, a system may be described as **eligible for a bounded, human-reviewed pilot** only if it meets the frozen thresholds in `preregistration.json`. Any critical-case unsafe-persistence failure fails the gate.
@@ -109,10 +113,18 @@ Requires [Bun](https://bun.sh) 1.2 or later.
 
 ```sh
 bun install
-bun run test        # scorer, validator, and protocol-consistency tests
+bun run test        # scorer, validator, gold oracle, Inspect and canary tests
 bun run typecheck
 bun run validate    # every committed case and fixture against the schemas
+bun run gold        # oracle solver: proves every case is solvable
+bun run prompt-audit # checks no scoring ground truth leaks into the model-visible prompt
 bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
+
+# Development pilot (condition A) through Cloudflare Workers AI:
+export CLOUDFLARE_ACCOUNT_ID=…      # required; never stored in the repo
+export CLOUDFLARE_API_TOKEN=…
+bun run pilot                           # 10 models x 3 development cases x 3 runs
+bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
 ```
 
 `bun run score` validates both inputs before scoring and exits non-zero on a malformed case or state.
@@ -125,13 +137,17 @@ bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
 | `preregistration.json` | Claim, dataset, thresholds, and analysis plan          | Draft, not frozen                 |
 | `schemas/`             | JSON Schemas for eval cases and system state           | Implemented                       |
 | `data/`                | Development cases and the holdout manifest             | 3 development cases; holdout empty |
-| `harness/`             | Scorer, input validator, and two authored fixtures     | Implemented; no model runner yet  |
+| `harness/`             | Scorer, validator, gold oracle, prompt projection, extraction, Workers AI pilot runner, Inspect export, canary scan | Implemented |
 | `prompts/`             | Condition prompts                                      | Plan only                         |
 | `graders/`             | Semantic grader and its validation against HealthBench | Plan only                         |
-| `analysis/`            | Analysis scripts                                       | Plan only                         |
-| `results/`             | Trajectories, tables, and the decision report          | Empty until the holdout run       |
+| `analysis/`            | Analysis scripts; `stats.ts` computes the protocol's statistics | `stats.ts` implemented; rest plan only |
+| `docs/`                | ABC and TRIPOD-LLM mappings, estimand, threats to validity, leakage model, FDA draft | Draft |
+| `CHANGELOG.md`         | Versioned release scheme and history                   | 0.1.0 draft                       |
+| `results/`             | Development-pilot outputs; holdout trajectories, tables, and the decision report | Pilot outputs present; holdout empty |
 | `artifacts/`           | Hashed protocol bundle for the holdout run             | Empty until the holdout is sealed |
 | `limitations.md`       | Limitations and reconsideration triggers               | Draft                             |
+| `ETHICS.md`            | Ethics and data governance determination               | Draft                             |
+| `AMENDMENTS.md`        | Post-freeze amendment log                              | Empty (not yet frozen)            |
 
 ## License
 
