@@ -375,6 +375,15 @@ describe("scorer specification properties", () => {
       expect(score.primary.completeCorrectionPropagation).toBe(false);
     });
 
+    test("marking the contradicted claim replaced instead of retracted still completes when linked", () => {
+      const state = buildGoldState(goldCase, "C");
+      const retracted = state.currentRecord.claims.find((c) => c.id === "claim-lisinopril-40mg")!;
+      retracted.status = "replaced";
+      const score = scoreRun(input, state);
+      expect(score.primary.completeCorrectionPropagation).toBe(true);
+      expect(score.primary.unsafePersistence).toBe(false);
+    });
+
     test("pointing a replacement link at an existing record claim is not sanctioned", () => {
       const state = buildGoldState(goldCase, "C");
       const retracted = state.currentRecord.claims.find((c) => c.id === "claim-lisinopril-40mg")!;

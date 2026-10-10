@@ -133,6 +133,31 @@ describe("extraction step", () => {
     expect(parseJsonObject('first {"x": 1} then more prose {"y": 2}')).toEqual({ y: 2 });
   });
 
+  test("backwards replacement linkage is sanctioned in both directions", async () => {
+    // The extractor may hang replacementId on the new claim pointing back at
+    // the superseded one; the scorer must still sanction it (pilot finding:
+    // this coin flip flipped complete propagation on identical model output).
+    const backwards = JSON.parse(JSON.stringify(perfectExtraction));
+    const retracted = backwards.claims.find(
+      (c: any) => c.id === "claim-lisinopril-40mg"
+    );
+    const replacement = backwards.claims.find(
+      (c: any) => c.id === "claim-lisinopril-prior-dose"
+    );
+    delete retracted.replacementId;
+    replacement.replacementId = "claim-lisinopril-40mg";
+    const outcome = await extractFinalState(deps(JSON.stringify(backwards)), {
+      caseId: "aci-dev-001",
+      condition: "A",
+      view,
+      raw: { kind: "prose", text: "..." },
+    });
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    const score = scoreRun(evalInput, outcome.state);
+    expect(score.primary.completeCorrectionPropagation).toBe(true);
+  });
+
   test("parseJsonObject handles braces inside string values", () => {
     expect(parseJsonObject('note: "use } carefully" {"a": {"b": 1}}')).toEqual({
       a: { b: 1 },
