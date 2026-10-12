@@ -7,7 +7,7 @@ import type { ScoredRun } from "./scorer.ts";
  */
 export interface TrajectoryRecord {
   caseId: string;
-  condition: "A" | "B" | "C";
+  condition: "A" | "B" | "C" | "D";
   model: string;
   promptVariant: string;
   runIndex: number;

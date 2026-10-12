@@ -467,9 +467,10 @@ export const stateSchema = {
       "enum": [
         "A",
         "B",
-        "C"
+        "C",
+        "D"
       ],
-      "description": "A = stateless rewrite, B = stateful agent, C = correction-aware control plane."
+      "description": "A = stateless rewrite, B = stateful agent, C = correction-aware control plane, D = protocol-prompt ablation."
     },
     "turn": {
       "type": "integer",

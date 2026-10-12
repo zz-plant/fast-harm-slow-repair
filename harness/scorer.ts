@@ -36,7 +36,7 @@ export interface EvalCaseInput {
 
 export interface FinalStateInput {
   caseId: string;
-  condition: "A" | "B" | "C";
+  condition: "A" | "B" | "C" | "D";
   turn: number;
   correctionAcknowledged: boolean;
   evidenceEvents?: Array<{
@@ -93,7 +93,7 @@ export interface AuditTrailQuality {
 export interface ScoredRun {
   metadata: {
     caseId: string;
-    condition: "A" | "B" | "C";
+    condition: "A" | "B" | "C" | "D";
     finalTurn: number;
   };
   primary: {

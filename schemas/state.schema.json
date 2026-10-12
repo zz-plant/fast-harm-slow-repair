@@ -26,8 +26,8 @@
     },
     "condition": {
       "type": "string",
-      "enum": ["A", "B", "C"],
-      "description": "A = stateless rewrite, B = stateful agent, C = correction-aware control plane."
+      "enum": ["A", "B", "C", "D"],
+      "description": "A = stateless rewrite, B = stateful agent, C = correction-aware control plane, D = protocol-prompt ablation."
     },
     "turn": {
       "type": "integer",
