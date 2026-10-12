@@ -128,6 +128,18 @@ const pinnedVersions = await resolveModelVersionIds(
 const pinnedCount = [...pinnedVersions.values()].filter((id) => id !== null).length;
 console.log(`Pinned Workers AI version ids resolved for ${pinnedCount} of ${pinnedVersions.size} model(s).`);
 
+// Persisted with every record: the extractors determine the extracted state
+// and therefore the score, so their aliases and pinned version ids travel
+// with each trajectory (protocol §7 pinning).
+const runSettings = {
+  temperature: args.temperature,
+  maxTokens: args.maxTokens,
+  extractorModel: args.extractor,
+  extractorVersionId: pinnedVersions.get(args.extractor) ?? null,
+  fallbackExtractorModel: args.fallbackExtractor,
+  fallbackExtractorVersionId: pinnedVersions.get(args.fallbackExtractor) ?? null,
+};
+
 // Prompts are model-independent: build and audit them once per case.
 const promptsByCase = new Map<string, { promptText: string; promptMessages: ReturnType<typeof buildConditionAPrompt> }>();
 for (const evalCase of cases) {
@@ -208,7 +220,7 @@ async function runJob(job: Job): Promise<void> {
           pinnedVersionId: pinnedVersions.get(job.model) ?? null,
           rawOutput: { content: call.rawContent, reasoning: call.reasoningText, channel: call.channel },
           canary,
-          extraction: { ok: true, notes: outcome.notes },
+          extraction: { ok: true, notes: outcome.notes, extractorModel: outcome.extractorModel },
           extractedState: outcome.state,
           score,
           usage: {
@@ -217,7 +229,7 @@ async function runJob(job: Job): Promise<void> {
             totalTokens: call.totalTokens,
             neurons: call.neurons,
           },
-          settings: { temperature: args.temperature, maxTokens: args.maxTokens, extractorModel: args.extractor },
+          settings: runSettings,
         };
       } else {
         record = makeFailureRecord(job, promptText, outcome.reason, args, call, canary, "extraction_failure");
@@ -272,11 +284,11 @@ async function runJob(job: Job): Promise<void> {
         agentTurns: result.turnOutputs,
         toolCalls: result.sandbox.toolCalls,
         canary,
-        extraction: { ok: true, notes: [] },
+        extraction: { ok: true, notes: [], extractorModel: "none" },
         extractedState: result.state,
         score,
         usage: result.usage,
-        settings: { temperature: args.temperature, maxTokens: args.maxTokens, extractorModel: args.extractor },
+        settings: runSettings,
       };
     }
   }
@@ -311,7 +323,7 @@ function makeFailureRecord(
     usage: call
       ? { inputTokens: call.inputTokens, outputTokens: call.outputTokens, totalTokens: call.totalTokens, neurons: call.neurons }
       : { inputTokens: 0, outputTokens: 0, totalTokens: 0, neurons: 0 },
-    settings: { temperature: args.temperature, maxTokens: args.maxTokens, extractorModel: args.extractor },
+    settings: runSettings,
   };
 }
 
