@@ -54,7 +54,7 @@ const records: TrajectoryRecordOut[] = rawRecords.map((record) => {
     return {
       ...record,
       extraction: { ok: false, reason: `re-score: state no longer valid: ${errors.join("; ")}`, notes: record.extraction.notes },
-      score: unevaluableScore(record.caseId, "extracted state invalid on re-score", "extraction_failure"),
+      score: unevaluableScore(record.caseId, record.condition, "extracted state invalid on re-score", "extraction_failure"),
     };
   }
   rescores += 1;
@@ -74,7 +74,6 @@ const settings = {
   fallbackExtractor: "",
 };
 const caseIds = cases.map((evalCase) => evalCase.id as string);
-const models = [...new Set(records.map((r) => r.model))];
 
 const outDir = join(root, `${dir.replace(/\/$/, "")}-rescored`);
 mkdirSync(outDir, { recursive: true });
@@ -89,4 +88,4 @@ writeFileSync(
 
 console.log(`Re-scored ${rescores} trajectory record(s) against the current scorer; no model calls.`);
 console.log(`Wrote ${join(outDir, "trajectories.jsonl")} and ${join(outDir, "summary.md")}`);
-console.log("\n" + renderPerModelTable(records, models, caseIds, runs));
+console.log("\n" + renderPerModelTable(records, caseIds, runs));
