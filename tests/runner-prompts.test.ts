@@ -42,16 +42,39 @@ describe("condition-A prompt construction", () => {
       ]) {
         expect(prompt).not.toContain(marker);
       }
-      expect(() => assertPromptSafe(prompt, canaries)).not.toThrow();
+      expect(() => assertPromptSafe(view, prompt, canaries)).not.toThrow();
     });
   }
 
-  test("assertPromptSafe throws on an injected marker", () => {
-    expect(() => assertPromptSafe("innocent text severityTier: critical")).toThrow(
+  test("ordinary clinical prose does not trip the guard", () => {
+    // The P2 from the PR-5 review: "split", "purpose", and "canary" are
+    // ordinary English words. They are checked as object keys in the projected
+    // view, never as raw text substrings, so prose like this cannot abort a
+    // pilot run.
+    const view = publicCaseView(cases[0]!);
+    const prose =
+      "the purpose of this medication is symptom control; split the dose; a canary in a coal mine; the plan's split into two visits";
+    expect(() => assertPromptSafe(view, prose)).not.toThrow();
+  });
+
+  test("a forbidden key anywhere in the projected view throws", () => {
+    const leaked = {
+      ...publicCaseView(cases[0]!),
+      initialState: {
+        ...publicCaseView(cases[0]!).initialState,
+        authorityCondition: "clinician_correction",
+      },
+    } as never;
+    expect(() => assertPromptSafe(leaked, "innocent text")).toThrow(/authorityCondition/);
+  });
+
+  test("assertPromptSafe throws on an injected distinctive marker", () => {
+    const view = publicCaseView(cases[0]!);
+    expect(() => assertPromptSafe(view, "innocent text severityTier: critical")).toThrow(
       /Ground-truth material leaked/
     );
-    expect(() => assertPromptSafe("innocent text", ["canary-token"])).not.toThrow();
-    expect(() => assertPromptSafe("contains canary-token", ["canary-token"])).toThrow(
+    expect(() => assertPromptSafe(view, "innocent text", ["canary-token"])).not.toThrow();
+    expect(() => assertPromptSafe(view, "contains canary-token", ["canary-token"])).toThrow(
       /Ground-truth material leaked/
     );
   });

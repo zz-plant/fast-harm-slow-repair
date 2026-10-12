@@ -146,7 +146,7 @@ for (const evalCase of cases) {
   const view = publicCaseView(evalCase);
   const promptMessages = buildConditionAPrompt(view);
   const promptText = renderPrompt(promptMessages);
-  assertPromptSafe(promptText, canaries);
+  assertPromptSafe(view, promptText, canaries);
   promptsByCase.set(evalCase.id, { promptText, promptMessages });
 }
 
@@ -247,6 +247,7 @@ async function runJob(job: Job): Promise<void> {
           .join("\n")
       : undefined;
     const promptText = buildAgentSystemPrompt(job.condition as "B" | "C" | "D", dependencies);
+    assertPromptSafe(view, promptText, canaries);
     const result = await runAgent(
       chat,
       job.model,
