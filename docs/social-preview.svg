@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Fast Harm, Slow Repair — does a healthcare AI workflow remain correctable after its record becomes wrong?">
+  <defs>
+    <radialGradient id="glow" cx="85%" cy="10%" r="60%">
+      <stop offset="0%" stop-color="#1E3A5F" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1E3A5F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="#0B1220"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <circle cx="1080" cy="560" r="180" fill="#134E4A" opacity="0.18"/>
+  <circle cx="120" cy="80" r="120" fill="#7F1D1D" opacity="0.15"/>
+
+  <!-- title -->
+  <text x="80" y="180" font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif" font-size="76" font-weight="700" fill="#F87171">Fast Harm,</text>
+  <text x="80" y="272" font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif" font-size="76" font-weight="700" fill="#34D399">Slow Repair</text>
+
+  <!-- subtitle -->
+  <text x="80" y="336" font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif" font-size="30" fill="#94A3B8">Does a healthcare AI workflow remain correctable</text>
+  <text x="80" y="376" font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif" font-size="30" fill="#94A3B8">after its record becomes wrong?</text>
+
+  <!-- condition chips -->
+  <g font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif">
+    <rect x="32" y="440" width="260" height="104" rx="14" fill="#111C33" stroke="#1E293B" stroke-width="2"/>
+    <text x="56" y="486" font-size="34" font-weight="700" fill="#94A3B8">A</text>
+    <text x="56" y="518" font-size="21" fill="#CBD5E1">stateless rewrite</text>
+
+    <rect x="324" y="440" width="260" height="104" rx="14" fill="#111C33" stroke="#1E293B" stroke-width="2"/>
+    <text x="348" y="486" font-size="34" font-weight="700" fill="#94A3B8">B</text>
+    <text x="348" y="518" font-size="21" fill="#CBD5E1">agent, no protocol</text>
+
+    <rect x="616" y="440" width="260" height="104" rx="14" fill="#0F2A2A" stroke="#34D399" stroke-width="2.5"/>
+    <text x="640" y="486" font-size="34" font-weight="700" fill="#34D399">C</text>
+    <text x="640" y="518" font-size="21" fill="#D1FAE5">control plane</text>
+
+    <rect x="908" y="440" width="260" height="104" rx="14" fill="#111C33" stroke="#1E293B" stroke-width="2"/>
+    <text x="932" y="486" font-size="34" font-weight="700" fill="#94A3B8">D</text>
+    <text x="932" y="518" font-size="21" fill="#CBD5E1">protocol text only</text>
+  </g>
+
+  <!-- footer -->
+  <text x="80" y="596" font-family="'DejaVu Sans','Helvetica Neue',Arial,sans-serif" font-size="22" fill="#64748B">Evaluation protocol · draft — not yet preregistered</text>
+</svg>

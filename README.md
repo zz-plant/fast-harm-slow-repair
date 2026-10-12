@@ -1,5 +1,7 @@
 # Fast Harm, Slow Repair
 
+[![CI](https://github.com/zz-plant/fast-harm-slow-repair/actions/workflows/ci.yml/badge.svg)](https://github.com/zz-plant/fast-harm-slow-repair/actions/workflows/ci.yml)
+
 **Does a healthcare AI workflow remain correctable after its record becomes wrong?**
 
 Version 0.1 draft · Draft protocol, not yet preregistered
@@ -34,18 +36,13 @@ A correction-aware control plane reduces unsafe persistence of contradicted info
 
 A simulated documentation and care-coordination workflow:
 
-```text
-Evidence events
-      ↓
-Current record
-      ↓
-Clinical draft note
-      ↓
-Patient-facing summary
-      ↓
-Downstream task or routing recommendation
-      ↓
-Action status + audit log
+```mermaid
+flowchart TD
+    E["Evidence events"] --> R["Current record"]
+    R --> N["Clinical draft note"]
+    N --> S["Patient-facing summary"]
+    S --> T["Downstream task / routing recommendation"]
+    T --> A["Action status + audit log"]
 ```
 
 No real messages, appointments, orders, or patient records are touched.
@@ -60,6 +57,27 @@ No real messages, appointments, orders, or patient records are touched.
 | D. Protocol prompt ablation       | Same tools as B plus the written correction protocol; isolates instructions from control-plane guarantees |
 
 The key comparison is **C versus B** on the same model and cases: the control plane against plain tool use on identical tools. **C versus A** is the baseline contrast, and **D** isolates whether the protocol *instructions* alone (without immutable events or enforced dependencies) explain the difference.
+
+How one trajectory flows through the harness — including the key structural difference that conditions B/C/D need no extraction step, because the tool trace *is* the state:
+
+```mermaid
+flowchart TD
+    subgraph CASE["Evaluation case — versioned, canary-marked"]
+        CE["Evidence events"] --> CR["Current record"]
+    end
+    CASE --> GUARD["Prompt projection<br/>leakage guard: scoring fields never shown"]
+    GUARD --> COND{"Condition"}
+    COND -->|"A — stateless rewrite"| PROSE["Revised prose"]
+    COND -->|"B · C · D — agentic"| LOOP["JSON-action loop on a sandbox<br/>C enforces provenance, audit, dependencies"]
+    PROSE --> EXT["Extraction ladder<br/>primary → fallback → repair"]
+    LOOP -->|"tool trace is the state"| STATE
+    EXT --> STATE["Structured final state"]
+    STATE --> SCORE["Deterministic scorer"]
+    SCORE --> PRIM["Primary measures<br/>unsafe persistence · complete propagation · recovery"]
+    SCORE --> FLAGS["Failure flags and components"]
+    FLAGS --> DIAG["Diagnostics<br/>taxonomy · diff · export-sft · rescore"]
+    PRIM --> OUT["Reports and Inspect logs"]
+```
 
 ## Dataset
 
@@ -83,7 +101,7 @@ The planned publication run uses two pinned models and three repetitions per cas
 
 The frozen-prompt core of the matrix is half that (864 trajectories); the second prompt variant is the instruction-sensitivity fold.
 
-The local pilot is intended to start with pinned Ollama models after the 12-case development set and condition prompts are complete.
+The development pilot has run on Cloudflare Workers AI as harness validation; the publication run below remains planned.
 
 One frontier model and one local model cannot separate architecture from model effects; the "architecture versus model choice" comparison is reported as exploratory until at least two models per class are run.
 
@@ -96,6 +114,15 @@ No composite "safety score." Primary measures reported separately:
 - successful recovery within two turns.
 
 **Extraction first:** every arm's raw output (prose for A, tool traces for B and C) is converted to the same structured state by one extraction step before scoring, so condition A is not failed by construction for lacking an audit log. Audit-trail quality is its own measure — reported separately and never part of the propagation gate.
+
+```mermaid
+flowchart TD
+    S["Structured final state"] --> C{"Component checks"}
+    C -->|"any triggered"| P1["Unsafe persistence"]
+    C -->|"all hold"| P2["Complete propagation"]
+    C --> P3["Recovery within two turns"]
+    S --> AUD["Audit-trail quality<br/>own measure — never gates propagation"]
+```
 
 Plus secondary measures for detection, rollback, false closure, authority overreach, evidence/provenance accuracy, audit-trail quality, unaffected-claim preservation, collateral retraction, unneeded holds, over-deference (a task proceeding from a claim the correction alone invented), blanket refusal, run-to-run consistency (pass³), and human burden.
 
@@ -123,8 +150,9 @@ bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
 # Development pilot (condition A) through Cloudflare Workers AI:
 export CLOUDFLARE_ACCOUNT_ID=…      # required; never stored in the repo
 export CLOUDFLARE_API_TOKEN=…
-bun run pilot                           # 10 models x 3 development cases x 3 runs
+bun run pilot                           # 9 models x 3 development cases x 3 runs, condition A
 bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
+bun run pilot --conditions B,C          # the agentic conditions (sandbox + JSON actions)
 ```
 
 `bun run score` validates both inputs before scoring and exits non-zero on a malformed case or state.
