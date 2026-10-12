@@ -41,7 +41,7 @@ export interface ProseExtractionInput {
 }
 
 export type ExtractionOutcome =
-  | { ok: true; state: FinalStateInput; notes: string[] }
+  | { ok: true; state: FinalStateInput; notes: string[]; extractorModel: string }
   | { ok: false; reason: string };
 
 /**
@@ -69,7 +69,8 @@ export async function extractFinalState(
   if (input.raw.kind === "trace") {
     const errors = validateState(input.raw.state);
     if (errors.length > 0) return { ok: false, reason: errors.join("; ") };
-    return { ok: true, state: input.raw.state, notes: [] };
+    // The tool trace is already the state; no extractor model was involved.
+    return { ok: true, state: input.raw.state, notes: [], extractorModel: "none" };
   }
 
   const correction = input.view.correction;
@@ -166,7 +167,7 @@ export async function extractFinalState(
     if (errors.length > 0) {
       return { ok: false, reason: `extracted state invalid: ${errors.join("; ")}` };
     }
-    return { ok: true, state, notes };
+    return { ok: true, state, notes, extractorModel: model };
   };
 
   const primary = await attemptWith(deps.extractorModel);
@@ -231,7 +232,7 @@ function buildExtractionUserPrompt(
     correctionAcknowledged:
       "boolean — true if the output incorporates or addresses the new event in any way (including disputing or rejecting it); false only if the output ignores it entirely",
     claims:
-      "the full updated claim list; for every original claim use its exact id and text, keep its evidenceIds, and set status to active/disputed/retracted/replaced as the output indicates; append the new event id to evidenceIds ONLY if the output attributes the change to that event; when the output introduces a statement that supersedes a retracted or replaced claim (for example, the corrected version of the same instruction), link the retracted claim to that new statement via replacementId; any genuinely new clinical claim the output introduces gets a fresh id claim-extracted-1, claim-extracted-2, ...",
+      "the full updated claim list; for every original claim use its exact id and text, keep its evidenceIds, and set status to active/disputed/retracted/replaced as the output indicates; append the new event id to evidenceIds ONLY if the output attributes the change to that event; when the output introduces a statement that supersedes a retracted or replaced claim (for example, the corrected version of the same instruction), link the superseded claim to that new statement via replacementId; replacementId always sits on the SUPERSEDED (retracted or replaced) claim and points at its successor — never the reverse; prefer retracted when the output removes a claim without naming its successor, replaced when the output names one; any genuinely new clinical claim the output introduces gets a fresh id claim-extracted-1, claim-extracted-2, ...",
     clinicalDraftNote: { text: "the revised draft note text from the output", claimIds: "claim ids the revised note asserts" },
     patientFacingSummary: { text: "the revised summary text from the output", claimIds: "claim ids the revised summary asserts" },
     downstreamTask: {
@@ -262,12 +263,19 @@ function buildExtractionUserPrompt(
     "Faithfulness rules:",
     "- The REVISED note and summary TEXT determine claims, statuses, and citations. A CORRECTION STATUS or DOWNSTREAM TASK section that narrates a change the revised text does not show must NOT be reflected in the claims or citations.",
     "- Map only what the output actually says; never infer changes the output does not state.",
+    "",
+    "Allowed status values — use exactly these strings, never synonyms:",
+    "- claim status: active | disputed | retracted | replaced",
+    "- downstreamTask.status: pending | held | proceeded | rolled_back | completed",
+    "- actionStatus: pending | stopped | rolled_back | proceeded | escalated",
+    "- dispute.status: open | under_review | resolved",
+    "If the output uses another word, map it to the closest allowed value; never invent values.",
     ...(repairErrors
       ? [
           "",
           "Your previous reply failed validation with these errors:",
           repairErrors,
-          "Output the corrected JSON object only, using exactly the allowed values for every status field.",
+          "Output the corrected JSON object only, using exactly the allowed status values above.",
         ]
       : []),
   ].join("\n");

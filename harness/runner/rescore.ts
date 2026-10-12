@@ -18,6 +18,12 @@ import {
  *
  * Usage: bun run rescore <results/dev-pilot/<timestamp>> [cases.jsonl]
  * Writes to <dir>-rescored/ with re-scored trajectories and a fresh summary.
+ *
+ * Fails outright when any saved case id is absent from the cases file: the
+ * output would otherwise mix original scores with current-scorer scores
+ * while claiming a fresh re-score. Failure records (extraction or model-call
+ * failures) are re-marked unevaluable under the current rules, so every
+ * record in the output reflects the scorer as it is now.
  */
 
 const [dir, casesPath = "data/development.jsonl"] = Bun.argv.slice(2);
@@ -43,18 +49,43 @@ try {
 const cases = readCases(join(root, casesPath));
 const caseBy = new Map(cases.map((evalCase) => [evalCase.id, goldCaseFromJson(evalCase)]));
 
+// Every saved case must be rescorable, or the output would mix original
+// scores with current-scorer scores while claiming a fresh re-score. This
+// also catches the cases file being omitted or pointed at the wrong set.
+const missingCaseIds = [...new Set(rawRecords.map((r) => r.caseId))].filter((id) => !caseBy.has(id));
+if (missingCaseIds.length > 0) {
+  console.error(`Cannot re-score: ${missingCaseIds.length} case id(s) in the saved trajectories are absent from ${casesPath}:`);
+  console.error(`  ${missingCaseIds.join(", ")}`);
+  console.error(`Pass the cases file the run used: bun run rescore <results/dev-pilot/<timestamp>> <cases.jsonl>`);
+  process.exit(1);
+}
+
 let rescores = 0;
+let remarked = 0;
 const records: TrajectoryRecordOut[] = rawRecords.map((record) => {
-  if (!record.extraction.ok || record.extractedState === undefined) return record;
-  const goldCase = caseBy.get(record.caseId);
-  if (!goldCase) return record;
+  const goldCase = caseBy.get(record.caseId)!;
+  if (!record.extraction.ok || record.extractedState === undefined) {
+    // Already-unscorable records keep their reason, but their conservative
+    // score is re-derived under the current rules so no record in the output
+    // carries a stale score.
+    remarked += 1;
+    return {
+      ...record,
+      score: unevaluableScore(
+        record.caseId,
+        record.condition,
+        record.extraction.reason ?? "no extracted state",
+        record.score.failureFlags.includes("model_call_failed") ? "model_call_failed" : "extraction_failure"
+      ),
+    };
+  }
   const errors = validateState(record.extractedState as Record<string, any>);
   if (errors.length > 0) {
     rescores += 1;
     return {
       ...record,
       extraction: { ok: false, reason: `re-score: state no longer valid: ${errors.join("; ")}`, notes: record.extraction.notes },
-      score: unevaluableScore(record.caseId, "extracted state invalid on re-score", "extraction_failure"),
+      score: unevaluableScore(record.caseId, record.condition, "extracted state invalid on re-score", "extraction_failure"),
     };
   }
   rescores += 1;
@@ -71,10 +102,9 @@ const settings = {
   runs,
   temperature: first.settings.temperature,
   extractor: first.settings.extractorModel,
-  fallbackExtractor: "",
+  fallbackExtractor: first.settings.fallbackExtractorModel ?? "",
 };
 const caseIds = cases.map((evalCase) => evalCase.id as string);
-const models = [...new Set(records.map((r) => r.model))];
 
 const outDir = join(root, `${dir.replace(/\/$/, "")}-rescored`);
 mkdirSync(outDir, { recursive: true });
@@ -87,6 +117,8 @@ writeFileSync(
   renderSummary(records, settings, new Date(), caseIds)
 );
 
-console.log(`Re-scored ${rescores} trajectory record(s) against the current scorer; no model calls.`);
+console.log(
+  `Re-scored ${rescores} state(s) and re-marked ${remarked} failure record(s) under the current scorer (${rawRecords.length} total); no model calls.`
+);
 console.log(`Wrote ${join(outDir, "trajectories.jsonl")} and ${join(outDir, "summary.md")}`);
-console.log("\n" + renderPerModelTable(records, models, caseIds, runs));
+console.log("\n" + renderPerModelTable(records, caseIds, runs));

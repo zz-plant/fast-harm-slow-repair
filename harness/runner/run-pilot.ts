@@ -10,6 +10,7 @@ import { extractFinalState } from "../extract.ts";
 import { makeWorkersAiClient, type ChatResult, type WorkersAiChat } from "./workers-ai.ts";
 import { assertPromptSafe, buildConditionAPrompt, renderPrompt } from "./prompts.ts";
 import { resolveModelVersionIds } from "./model-catalog.ts";
+import { buildAgentSystemPrompt, runAgent } from "./agent.ts";
 import { renderPerModelTable, renderSummary, unevaluableScore, type TrajectoryRecordOut } from "./report.ts";
 
 /**
@@ -52,6 +53,7 @@ interface CliArgs {
   temperature: number;
   maxTokens: number;
   concurrency: number;
+  conditions: Array<"A" | "B" | "C" | "D">;
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -72,6 +74,7 @@ function parseArgs(argv: string[]): CliArgs {
     // four output sections.
     maxTokens: 4096,
     concurrency: 4,
+    conditions: ["A"],
   };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i]!;
@@ -86,6 +89,7 @@ function parseArgs(argv: string[]): CliArgs {
       case "--temperature": args.temperature = Number(value); i += 1; break;
       case "--max-tokens": args.maxTokens = Number(value); i += 1; break;
       case "--concurrency": args.concurrency = Number(value); i += 1; break;
+      case "--conditions": args.conditions = value!.split(",").map((c) => c.trim().toUpperCase() as "A" | "B" | "C" | "D").filter((c) => ["A", "B", "C", "D"].includes(c)); i += 1; break;
       default:
         throw new Error(`Unknown flag: ${flag}`);
     }
@@ -124,6 +128,18 @@ const pinnedVersions = await resolveModelVersionIds(
 const pinnedCount = [...pinnedVersions.values()].filter((id) => id !== null).length;
 console.log(`Pinned Workers AI version ids resolved for ${pinnedCount} of ${pinnedVersions.size} model(s).`);
 
+// Persisted with every record: the extractors determine the extracted state
+// and therefore the score, so their aliases and pinned version ids travel
+// with each trajectory (protocol §7 pinning).
+const runSettings = {
+  temperature: args.temperature,
+  maxTokens: args.maxTokens,
+  extractorModel: args.extractor,
+  extractorVersionId: pinnedVersions.get(args.extractor) ?? null,
+  fallbackExtractorModel: args.fallbackExtractor,
+  fallbackExtractorVersionId: pinnedVersions.get(args.fallbackExtractor) ?? null,
+};
+
 // Prompts are model-independent: build and audit them once per case.
 const promptsByCase = new Map<string, { promptText: string; promptMessages: ReturnType<typeof buildConditionAPrompt> }>();
 for (const evalCase of cases) {
@@ -138,19 +154,22 @@ interface Job {
   model: string;
   caseId: string;
   runIndex: number;
+  condition: "A" | "B" | "C" | "D";
 }
 const jobs: Job[] = [];
 for (const model of args.models) {
   for (const evalCase of cases) {
     for (let runIndex = 0; runIndex < args.runs; runIndex += 1) {
-      jobs.push({ model, caseId: evalCase.id, runIndex });
+      for (const condition of args.conditions) {
+        jobs.push({ model, caseId: evalCase.id, runIndex, condition });
+      }
     }
   }
 }
 
 console.log(
-  `Development pilot: ${cases.length} case(s) x ${args.models.length} model(s) x ${args.runs} run(s) = ${jobs.length} trajectories.`,
-  `Extractor: ${args.extractor} (fallback ${args.fallbackExtractor}). Temperature ${args.temperature}, max_tokens ${args.maxTokens}, concurrency ${args.concurrency}.`
+  `Development pilot: ${cases.length} case(s) x ${args.models.length} model(s) x ${args.runs} run(s) x ${args.conditions.length} condition(s) = ${jobs.length} trajectories.`,
+  `Conditions: ${args.conditions.join(", ")}. Extractor: ${args.extractor} (fallback ${args.fallbackExtractor}). Temperature ${args.temperature}, max_tokens ${args.maxTokens}, concurrency ${args.concurrency}.`
 );
 
 const startedAt = new Date();
@@ -160,58 +179,117 @@ let completed = 0;
 async function runJob(job: Job): Promise<void> {
   const evalCase = cases.find((c) => c.id === job.caseId)!;
   const goldCase = goldCaseFromJson(evalCase);
-  const { promptText, promptMessages } = promptsByCase.get(job.caseId)!;
   const view = publicCaseView(evalCase);
-
-  let call: ChatResult;
-  try {
-    call = await chat(job.model, promptMessages, {
-      temperature: args.temperature,
-      maxTokens: args.maxTokens,
-      // Thinking models at 4096 tokens can exceed two minutes.
-      timeoutMs: 240_000,
-    });
-  } catch (error) {
-    const reason = `model call failed: ${(error as Error).message}`;
-    records.push(makeFailureRecord(job, promptText, reason, args, undefined, undefined, "model_call_failed"));
-    noteCompletion(job, reason);
-    return;
-  }
-
-  const canary = contaminationReport(call.text, canaries);
   let record: TrajectoryRecordOut;
-  if (call.text === "") {
-    record = makeFailureRecord(job, promptText, "model returned no text", args, call, canary, "extraction_failure");
+
+  if (job.condition === "A") {
+    const { promptText, promptMessages } = promptsByCase.get(job.caseId)!;
+    let call: ChatResult;
+    try {
+      call = await chat(job.model, promptMessages, {
+        temperature: args.temperature,
+        maxTokens: args.maxTokens,
+        // Thinking models at 4096 tokens can exceed two minutes.
+        timeoutMs: 240_000,
+      });
+    } catch (error) {
+      const reason = `model call failed: ${(error as Error).message}`;
+      records.push(makeFailureRecord(job, promptText, reason, args, undefined, undefined, "model_call_failed"));
+      noteCompletion(job, reason);
+      return;
+    }
+
+    const canary = contaminationReport(call.text, canaries);
+    if (call.text === "") {
+      record = makeFailureRecord(job, promptText, "model returned no text", args, call, canary, "extraction_failure");
+    } else {
+      const outcome = await extractFinalState(
+        { chat, extractorModel: args.extractor, fallbackExtractorModel: args.fallbackExtractor },
+        { caseId: job.caseId, condition: "A", view, raw: { kind: "prose", text: call.text } }
+      );
+      if (outcome.ok) {
+        const score = scoreRun(toEvalCaseInput(goldCase), outcome.state);
+        record = {
+          caseId: job.caseId,
+          model: job.model,
+          runIndex: job.runIndex,
+          condition: "A",
+          promptVariant: PROMPT_VARIANT,
+          createdAt: new Date().toISOString(),
+          promptText,
+          pinnedVersionId: pinnedVersions.get(job.model) ?? null,
+          rawOutput: { content: call.rawContent, reasoning: call.reasoningText, channel: call.channel },
+          canary,
+          extraction: { ok: true, notes: outcome.notes, extractorModel: outcome.extractorModel },
+          extractedState: outcome.state,
+          score,
+          usage: {
+            inputTokens: call.inputTokens,
+            outputTokens: call.outputTokens,
+            totalTokens: call.totalTokens,
+            neurons: call.neurons,
+          },
+          settings: runSettings,
+        };
+      } else {
+        record = makeFailureRecord(job, promptText, outcome.reason, args, call, canary, "extraction_failure");
+      }
+    }
   } else {
-    const outcome = await extractFinalState(
-      { chat, extractorModel: args.extractor, fallbackExtractorModel: args.fallbackExtractor },
-      { caseId: job.caseId, condition: "A", view, raw: { kind: "prose", text: call.text } }
+    // Agent conditions B/C/D: the sandbox is the environment, its final state
+    // is the scored state — no LLM extraction step runs for these conditions.
+    // Condition C intentionally exposes the case's dependency graph in its
+    // system prompt (that is the control plane being tested); no other
+    // condition sees it, and the ground-truth transition is never exposed.
+    const dependencies = job.condition === "C"
+      ? evalCase.artifactDependencies
+          .map((d) => `${d.artifact} depends on: ${d.dependsOnClaimIds.join(", ") || "nothing"}`)
+          .join("\n")
+      : undefined;
+    const promptText = buildAgentSystemPrompt(job.condition as "B" | "C" | "D", dependencies);
+    const result = await runAgent(
+      chat,
+      job.model,
+      view,
+      job.caseId,
+      job.condition as "B" | "C" | "D",
+      evalCase.maxRecourseTurnBudget,
+      dependencies,
+      { temperature: args.temperature, maxTokens: args.maxTokens }
     );
-    if (outcome.ok) {
-      const score = scoreRun(toEvalCaseInput(goldCase), outcome.state);
+    const agentText = result.turnOutputs.join("\n");
+    const canary = contaminationReport(agentText, canaries);
+    if (!result.ok) {
+      const flag = result.reason?.startsWith("model call failed") ? "model_call_failed" : "extraction_failure";
+      record = makeFailureRecord(job, promptText, result.reason ?? "agent failed", args, undefined, canary, flag as "extraction_failure" | "model_call_failed");
+      // Preserve the partial turn data even on failure.
+      record.agentTurns = result.turnOutputs;
+      record.toolCalls = result.sandbox.toolCalls;
+    } else {
+      const score = scoreRun(toEvalCaseInput(goldCase), result.state!);
       record = {
         caseId: job.caseId,
         model: job.model,
         runIndex: job.runIndex,
-        condition: "A",
+        condition: job.condition,
         promptVariant: PROMPT_VARIANT,
         createdAt: new Date().toISOString(),
+        promptText,
         pinnedVersionId: pinnedVersions.get(job.model) ?? null,
-        rawOutput: { content: call.rawContent, reasoning: call.reasoningText, channel: call.channel },
-        canary,
-        extraction: { ok: true, notes: outcome.notes },
-        extractedState: outcome.state,
-        score,
-        usage: {
-          inputTokens: call.inputTokens,
-          outputTokens: call.outputTokens,
-          totalTokens: call.totalTokens,
-          neurons: call.neurons,
+        rawOutput: {
+          content: result.turnOutputs[result.turnOutputs.length - 1] ?? "",
+          reasoning: null,
+          channel: "content",
         },
-        settings: { temperature: args.temperature, maxTokens: args.maxTokens, extractorModel: args.extractor },
+        agentTurns: result.turnOutputs,
+        toolCalls: result.sandbox.toolCalls,
+        canary,
+        extraction: { ok: true, notes: [], extractorModel: "none" },
+        extractedState: result.state,
+        score,
+        usage: result.usage,
+        settings: runSettings,
       };
-    } else {
-      record = makeFailureRecord(job, promptText, outcome.reason, args, call, canary, "extraction_failure");
     }
   }
   records.push(record);
@@ -231,20 +309,21 @@ function makeFailureRecord(
     caseId: job.caseId,
     model: job.model,
     runIndex: job.runIndex,
-    condition: "A",
+    condition: job.condition,
     promptVariant: PROMPT_VARIANT,
     createdAt: new Date().toISOString(),
+    promptText,
     pinnedVersionId: pinnedVersions.get(job.model) ?? null,
     rawOutput: call
       ? { content: call.rawContent, reasoning: call.reasoningText, channel: call.channel }
       : { content: "", reasoning: null, channel: "none" },
     canary: canary ?? { contaminated: false, matched: [] },
     extraction: { ok: false, reason, notes: [] },
-    score: unevaluableScore(job.caseId, reason, flag),
+    score: unevaluableScore(job.caseId, job.condition, reason, flag),
     usage: call
       ? { inputTokens: call.inputTokens, outputTokens: call.outputTokens, totalTokens: call.totalTokens, neurons: call.neurons }
       : { inputTokens: 0, outputTokens: 0, totalTokens: 0, neurons: 0 },
-    settings: { temperature: args.temperature, maxTokens: args.maxTokens, extractorModel: args.extractor },
+    settings: runSettings,
   };
 }
 
@@ -285,10 +364,7 @@ const outDir = join(root, args.outBase, stamp);
 mkdirSync(outDir, { recursive: true });
 
 const trajectoriesPath = join(outDir, "trajectories.jsonl");
-writeFileSync(
-  trajectoriesPath,
-  records.map((record) => JSON.stringify({ ...record, promptText: promptsByCase.get(record.caseId)!.promptText })).join("\n") + "\n"
-);
+writeFileSync(trajectoriesPath, records.map((record) => JSON.stringify(record)).join("\n") + "\n");
 
 const inspectPath = join(outDir, "inspect-logs.jsonl");
 writeFileSync(
@@ -298,14 +374,20 @@ writeFileSync(
       JSON.stringify(
         toInspectEvalLog({
           caseId: record.caseId,
-          condition: "A",
+          condition: record.condition,
           model: record.model,
           promptVariant: record.promptVariant,
           runIndex: record.runIndex,
           createdAt: record.createdAt,
-          inputText: promptsByCase.get(record.caseId)!.promptText,
-          messages: [{ role: "assistant", content: record.rawOutput.content || record.rawOutput.reasoning || "" }],
-          toolCalls: [],
+          inputText: record.promptText,
+          messages: (record.agentTurns ?? [record.rawOutput.content || record.rawOutput.reasoning || ""]).map(
+            (content) => ({ role: "assistant", content })
+          ),
+          toolCalls: (record.toolCalls ?? []).map((call) => ({
+            name: call.tool,
+            input: call.args,
+            result: call.result,
+          })),
           extractedState: record.extractedState,
           score: record.score,
           usage: {
@@ -339,6 +421,4 @@ writeFileSync(
 );
 
 console.log(`\nWrote ${trajectoriesPath}\nWrote ${inspectPath}\nWrote ${summaryPath}`);
-console.log(
-  "\n" + renderPerModelTable(records, args.models, cases.map((evalCase) => evalCase.id), args.runs)
-);
+console.log("\n" + renderPerModelTable(records, cases.map((evalCase) => evalCase.id), args.runs));

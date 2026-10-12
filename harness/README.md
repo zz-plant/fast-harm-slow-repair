@@ -59,10 +59,14 @@ export CLOUDFLARE_ACCOUNT_ID=…
 export CLOUDFLARE_API_TOKEN=…   # the pilot never reads credentials from the repo
 bun run pilot                       # 9 models x 3 development cases x 3 runs, condition A
 bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
+bun run pilot --conditions B,C      # the agentic conditions (JSON actions against the sandbox)
 bun run rescore results/dev-pilot/<timestamp>   # offline re-score of a saved run (no model calls)
+bun run taxonomy results/dev-pilot/<timestamp>  # failure-mode matrix from a saved run
+bun run diff results/dev-pilot/<timestamp> <modelA> <modelB>   # extracted-state deltas
+bun run export-sft results/dev-pilot/<timestamp>  # corrective-feedback export (model-scored labels)
 ```
 
-The pilot refuses non-development cases, audits every prompt against the leakage guard, scans outputs for canaries, and extracts through a non-thinking primary model in OpenAI JSON mode — with a fallback model and a validation-repair pass for near-miss output — then writes `results/dev-pilot/<timestamp>/` (trajectories, Inspect logs, summary). Workers AI catalog version ids are resolved and recorded per trajectory so the models are pinned, not drifting. Pilot outputs are harness validation, not study data; the reporting module is shared with the offline re-scorer so scoring-rule changes apply to saved extracted states without re-running models.
+Conditions: `A` is the stateless rewrite (prose, extracted by a fixed model). `B`, `C`, and `D` are agentic: the model acts through JSON actions against an in-process sandbox, and the sandbox's final state is the scored state — no extraction step. C is the control plane: provenance is enforced (retraction/replacement must cite the correction event; proceeding requires task provenance), state changes are auto-audited, and the dependency graph is exposed in the system prompt. B has the same tools with no enforcement; D adds the written protocol text. Reports group by model and condition when several run.
 
 `correctionEvent.timing` is validated (an `after_action_started` correction must expect a rolled-back or escalated action) and is baked into each case's expected transition; the harness will use it once it can start an action before the correction arrives.
 

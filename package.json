@@ -14,7 +14,10 @@
     "prompt-audit": "bun run harness/prompt.ts",
     "gen:types": "bun run scripts/gen-types.ts",
     "pilot": "bun run harness/runner/run-pilot.ts",
-    "rescore": "bun run harness/runner/rescore.ts"
+    "rescore": "bun run harness/runner/rescore.ts",
+    "taxonomy": "bun run harness/runner/taxonomy.ts",
+    "diff": "bun run harness/runner/diff.ts",
+    "export-sft": "bun run harness/runner/export-sft.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

@@ -1,5 +1,14 @@
+import { readFileSync } from "node:fs";
 import type { ScoredRun } from "../scorer.ts";
 import type { ChatResult } from "./workers-ai.ts";
+
+/** Reads a run's trajectories.jsonl back into records. */
+export function readTrajectories(path: string): TrajectoryRecordOut[] {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line) as TrajectoryRecordOut);
+}
 
 /**
  * One pilot trajectory as written to `trajectories.jsonl`. Shared by the
@@ -11,18 +20,32 @@ export interface TrajectoryRecordOut {
   caseId: string;
   model: string;
   runIndex: number;
-  condition: "A";
+  condition: "A" | "B" | "C" | "D";
   promptVariant: string;
   createdAt: string;
+  /** The model-visible prompt for A, or the agent system prompt for B/C/D. */
+  promptText: string;
   /** Workers AI catalog version id resolved for `model` at run start. */
   pinnedVersionId?: string | null;
   rawOutput: { content: string; reasoning: string | null; channel: ChatResult["channel"] };
+  /** Multi-turn agent conditions (B/C/D): each turn's raw output. */
+  agentTurns?: string[];
+  /** Multi-turn agent conditions: the applied tool calls with results. */
+  toolCalls?: Array<{ tool: string; args: Record<string, unknown>; result: string }>;
   canary: { contaminated: boolean; matched: string[] };
-  extraction: { ok: boolean; reason?: string; notes: string[] };
+  extraction: { ok: boolean; reason?: string; notes: string[]; /** Which model produced the state; "none" for agent conditions. */ extractorModel?: string };
   extractedState?: unknown;
   score: ScoredRun;
   usage: { inputTokens: number; outputTokens: number; totalTokens: number; neurons: number };
-  settings: { temperature: number; maxTokens: number; extractorModel: string };
+  settings: {
+    temperature: number;
+    maxTokens: number;
+    extractorModel: string;
+    /** Pinned catalog version ids of both extractors, resolved at run start. */
+    extractorVersionId?: string | null;
+    fallbackExtractorModel?: string;
+    fallbackExtractorVersionId?: string | null;
+  };
 }
 
 export interface ReportSettings {
@@ -40,11 +63,12 @@ export interface ReportSettings {
  */
 export function unevaluableScore(
   caseId: string,
+  condition: "A" | "B" | "C" | "D",
   reason: string,
   flag: "extraction_failure" | "model_call_failed"
 ): ScoredRun {
   return {
-    metadata: { caseId, condition: "A", finalTurn: 1 },
+    metadata: { caseId, condition, finalTurn: 1 },
     primary: {
       unsafePersistence: true,
       completeCorrectionPropagation: false,
@@ -90,27 +114,22 @@ export function consistentCells(
   return consistent;
 }
 
-export function renderPerModelTable(
-  records: TrajectoryRecordOut[],
-  models: string[],
-  caseIds: string[],
-  runs: number
-): string {
+export function renderPerModelTable(records: TrajectoryRecordOut[], caseIds: string[], runs: number): string {
+  const multiCondition = new Set(records.map((record) => record.condition)).size > 1;
+  const keyOf = (record: TrajectoryRecordOut) =>
+    multiCondition ? `${record.model} [${record.condition}]` : record.model;
   const byModel = new Map<string, TrajectoryRecordOut[]>();
   for (const record of records) {
-    const list = byModel.get(record.model) ?? [];
+    const list = byModel.get(keyOf(record)) ?? [];
     list.push(record);
-    byModel.set(record.model, list);
+    byModel.set(keyOf(record), list);
   }
   const lines = [
     "| Model | n | Unsafe | Complete | Recovery | Extract fail | Call fail | No content | pass³ cells | Median tokens | Neurons |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ];
-  for (const model of models) {
-    const list = (byModel.get(model) ?? []).sort(
-      (a, b) => a.caseId.localeCompare(b.caseId) || a.runIndex - b.runIndex
-    );
-    if (list.length === 0) continue;
+  for (const [label, list] of byModel) {
+    list.sort((a, b) => a.caseId.localeCompare(b.caseId) || a.runIndex - b.runIndex);
     const n = list.length;
     const pct = (count: number) => `${Math.round((100 * count) / n)}%`;
     const unsafe = list.filter((r) => r.score.primary.unsafePersistence).length;
@@ -124,7 +143,7 @@ export function renderPerModelTable(
     const median = tokens[Math.floor(tokens.length / 2)] ?? 0;
     const neurons = list.reduce((sum, r) => sum + r.usage.neurons, 0);
     lines.push(
-      `| ${model} | ${n} | ${pct(unsafe)} | ${pct(complete)} | ${pct(recovery)} | ${pct(extractFail)} | ${pct(callFail)} | ${pct(noContent)} | ${cells}/${caseIds.length} | ${median} | ${neurons.toFixed(0)} |`
+      `| ${label} | ${n} | ${pct(unsafe)} | ${pct(complete)} | ${pct(recovery)} | ${pct(extractFail)} | ${pct(callFail)} | ${pct(noContent)} | ${cells}/${caseIds.length} | ${median} | ${neurons.toFixed(0)} |`
     );
   }
   return lines.join("\n");
@@ -137,15 +156,20 @@ export function renderSummary(
   caseIds: string[]
 ): string {
   const caseCount = caseIds.length;
+  const conditions = [...new Set(records.map((r) => r.condition))].join(", ");
   const perCaseLines: string[] = [];
   for (const record of records) {
+    const label =
+      new Set(records.map((r) => r.condition)).size > 1
+        ? `${record.model} [${record.condition}]`
+        : record.model;
     const flags = record.score.failureFlags.filter((f) => f !== "").join(", ") || "none";
     perCaseLines.push(
-      `- **${record.model} / ${record.caseId} / run ${record.runIndex}** — unsafe=${record.score.primary.unsafePersistence}, complete=${record.score.primary.completeCorrectionPropagation}, recovery=${record.score.primary.successfulRecoveryWithinTurnBudget}${record.extraction.ok ? "" : `, extraction failure: ${record.extraction.reason}`} — flags: ${flags}`
+      `- **${label} / ${record.caseId} / run ${record.runIndex}** — unsafe=${record.score.primary.unsafePersistence}, complete=${record.score.primary.completeCorrectionPropagation}, recovery=${record.score.primary.successfulRecoveryWithinTurnBudget}${record.extraction.ok ? "" : `, extraction failure: ${record.extraction.reason}`} — flags: ${flags}`
     );
   }
   return [
-    "# Development pilot — condition A via Cloudflare Workers AI",
+    "# Development pilot — conditions " + conditions + " via Cloudflare AI",
     "",
     "**This is harness validation, not study data.**",
     "",
@@ -158,7 +182,7 @@ export function renderSummary(
     "",
     "## Per-model results",
     "",
-    renderPerModelTable(records, modelsIn(records), caseIds, settings.runs),
+    renderPerModelTable(records, caseIds, settings.runs),
     "",
     "## Per-trajectory detail",
     "",
