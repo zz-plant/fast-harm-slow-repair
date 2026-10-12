@@ -1,14 +1,21 @@
-import { PROMPT_EXCLUDED_FIELDS, type PublicCaseView } from "../prompt.ts";
+import { findExcludedKeys, PROMPT_EXCLUDED_FIELDS, type PublicCaseView } from "../prompt.ts";
 import type { ChatMessage } from "./workers-ai.ts";
 
 /**
- * Ground-truth field names that must never appear in a prompt. Single-sourced
- * from the isolation contract's excluded fields: every field the public
- * projection strips is a marker here, so the two lists cannot drift. If a
- * refactor ever routes one of them into the prompt text, this throws at run
- * time instead of quietly leaking the answer.
+ * Ground-truth field names, single-sourced from the isolation contract's
+ * excluded fields: every field the public projection strips is accounted for
+ * here, so the two lists cannot drift.
+ *
+ * Not all of them are safe to substring-match against prompt text: "split",
+ * "purpose", and "canary" are ordinary English words that occur in legitimate
+ * clinical prose. Those are checked structurally — as object keys anywhere in
+ * the projected view — which is where a projection leak would actually show
+ * up. Only distinctive identifiers (camelCase) are additionally matched
+ * against the rendered text as defense in depth.
  */
-const GROUND_TRUTH_MARKERS: readonly string[] = PROMPT_EXCLUDED_FIELDS;
+const DISTINCTIVE_TEXT_MARKERS: readonly string[] = PROMPT_EXCLUDED_FIELDS.filter((field) =>
+  /[A-Z_]/.test(field)
+);
 
 /**
  * Condition A: stateless rewrite. The model receives the record, the evidence
@@ -61,13 +68,22 @@ export function buildConditionAPrompt(view: PublicCaseView): ChatMessage[] {
 }
 
 /**
- * Throws if ground-truth material appears in the rendered prompt. `extraForbidden`
- * carries per-case values (canaries) that the generic marker list cannot know.
+ * Throws if ground-truth material reaches a prompt: either as an object key
+ * anywhere in the projected view the prompt is built from (structural check,
+ * immune to ordinary prose), or as a distinctive marker or per-case value
+ * (canaries) in the rendered text. `extraForbidden` carries the canaries the
+ * generic marker list cannot know.
  */
-export function assertPromptSafe(promptText: string, extraForbidden: string[] = []): void {
-  const hits = [...GROUND_TRUTH_MARKERS, ...extraForbidden].filter((marker) =>
+export function assertPromptSafe(
+  view: PublicCaseView,
+  promptText: string,
+  extraForbidden: string[] = []
+): void {
+  const keyHits = findExcludedKeys(view);
+  const textHits = [...DISTINCTIVE_TEXT_MARKERS, ...extraForbidden].filter((marker) =>
     promptText.includes(marker)
   );
+  const hits = [...new Set([...keyHits, ...textHits])];
   if (hits.length > 0) {
     throw new Error(`Ground-truth material leaked into the prompt: ${hits.join(", ")}`);
   }
