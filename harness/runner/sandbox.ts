@@ -231,17 +231,26 @@ export function applyAction(
       if (config.autoAudit) audit(sandbox, "human_review_requested", [], { role: args.role ?? null });
       return `escalated to ${String(args.role ?? "human review")}`;
 
-    case "append_audit":
+    case "append_audit": {
       auditCounter += 1;
+      const rawDetails = args.details;
+      const details =
+        rawDetails !== null && typeof rawDetails === "object" && !Array.isArray(rawDetails)
+          ? (rawDetails as Record<string, unknown>)
+          : { value: rawDetails ?? null };
+      const claimIds = Array.isArray(args.claim_ids)
+        ? (args.claim_ids as unknown[]).map((id) => String(id))
+        : [];
       sandbox.auditLog.push({
         id: `audit-${auditCounter}`,
         timestamp: "2026-01-01T00:00:00.000Z",
         eventType: String(args.event_type ?? "unspecified"),
         actor: "model",
-        claimIds: Array.isArray(args.claim_ids) ? (args.claim_ids as string[]) : [],
-        details: (args.details as Record<string, unknown>) ?? {},
+        claimIds,
+        details,
       });
       return `audit event appended`;
+    }
 
     default:
       return `error: unknown tool ${tool}`;
