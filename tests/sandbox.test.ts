@@ -95,6 +95,17 @@ describe("sandbox", () => {
     expect(bSandbox.auditLog.some((e) => e.eventType === "claim_retracted")).toBe(false);
   });
 
+  test("append_audit coerces non-object details so the state stays valid", () => {
+    const sandbox = createSandbox(view);
+    applyAction(sandbox, view, SANDBOX_CONFIGS.B, {
+      tool: "append_audit",
+      args: { event_type: "note_added", details: "correction applied to the note" },
+    });
+    const state = sandboxToFinalState(sandbox, view, "aci-dev-001", "B", 2);
+    expect(validateState(state)).toEqual([]);
+    expect(state.auditLog[0]!.details).toEqual({ value: "correction applied to the note" });
+  });
+
   test("the sandbox final state is schema-valid", () => {
     const sandbox = createSandbox(view);
     applyAction(sandbox, view, SANDBOX_CONFIGS.C, {
