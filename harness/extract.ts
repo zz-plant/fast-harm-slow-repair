@@ -41,7 +41,7 @@ export interface ProseExtractionInput {
 }
 
 export type ExtractionOutcome =
-  | { ok: true; state: FinalStateInput; notes: string[] }
+  | { ok: true; state: FinalStateInput; notes: string[]; extractorModel: string }
   | { ok: false; reason: string };
 
 /**
@@ -69,7 +69,8 @@ export async function extractFinalState(
   if (input.raw.kind === "trace") {
     const errors = validateState(input.raw.state);
     if (errors.length > 0) return { ok: false, reason: errors.join("; ") };
-    return { ok: true, state: input.raw.state, notes: [] };
+    // The tool trace is already the state; no extractor model was involved.
+    return { ok: true, state: input.raw.state, notes: [], extractorModel: "none" };
   }
 
   const correction = input.view.correction;
@@ -166,7 +167,7 @@ export async function extractFinalState(
     if (errors.length > 0) {
       return { ok: false, reason: `extracted state invalid: ${errors.join("; ")}` };
     }
-    return { ok: true, state, notes };
+    return { ok: true, state, notes, extractorModel: model };
   };
 
   const primary = await attemptWith(deps.extractorModel);

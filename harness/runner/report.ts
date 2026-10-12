@@ -33,11 +33,19 @@ export interface TrajectoryRecordOut {
   /** Multi-turn agent conditions: the applied tool calls with results. */
   toolCalls?: Array<{ tool: string; args: Record<string, unknown>; result: string }>;
   canary: { contaminated: boolean; matched: string[] };
-  extraction: { ok: boolean; reason?: string; notes: string[] };
+  extraction: { ok: boolean; reason?: string; notes: string[]; /** Which model produced the state; "none" for agent conditions. */ extractorModel?: string };
   extractedState?: unknown;
   score: ScoredRun;
   usage: { inputTokens: number; outputTokens: number; totalTokens: number; neurons: number };
-  settings: { temperature: number; maxTokens: number; extractorModel: string };
+  settings: {
+    temperature: number;
+    maxTokens: number;
+    extractorModel: string;
+    /** Pinned catalog version ids of both extractors, resolved at run start. */
+    extractorVersionId?: string | null;
+    fallbackExtractorModel?: string;
+    fallbackExtractorVersionId?: string | null;
+  };
 }
 
 export interface ReportSettings {

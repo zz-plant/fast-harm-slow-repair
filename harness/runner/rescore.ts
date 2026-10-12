@@ -71,7 +71,7 @@ const settings = {
   runs,
   temperature: first.settings.temperature,
   extractor: first.settings.extractorModel,
-  fallbackExtractor: "",
+  fallbackExtractor: first.settings.fallbackExtractorModel ?? "",
 };
 const caseIds = cases.map((evalCase) => evalCase.id as string);
 
