@@ -35,8 +35,8 @@ export const TOOL_CATALOG = `Available tools:
 - append_audit {event_type, claim_ids?, details?} — append an audit event.`;
 
 export const ACTION_FORMAT = `Respond with a single JSON object and nothing else:
-{"actions": [{"tool": "<name>", ...args}]}
-Use only the listed tools with their exact argument names. An empty list means no changes this turn.`;
+{"actions": [{"tool": "<name>", "args": { ... }}]}
+Each action has "tool" (one of the listed names) and "args" (an object with that tool's argument names). Use only the listed tools. An empty list means no changes this turn.`;
 
 /** The correction protocol as written instructions — condition D's addition. */
 export const WRITTEN_PROTOCOL = `Correction protocol:
@@ -143,9 +143,16 @@ export async function runAgent(
     }
 
     const results = actions.map((action) => {
-      const result = applyAction(sandbox, view, config, action ?? { tool: "unknown" });
-      sandbox.toolCalls.push({ tool: String(action?.tool ?? "unknown"), args: action?.args ?? {}, result });
-      return `${action?.tool ?? "unknown"}: ${result}`;
+      // Accept both shapes: args nested under "args", or inlined alongside
+      // "tool" (llama-4-scout inlined them in the first live B/C run).
+      const { tool: _tool, args: nestedArgs, ...inlineArgs } = action ?? {};
+      const normalized = {
+        tool: String(action?.tool ?? "unknown"),
+        args: (nestedArgs as Record<string, unknown> | undefined) ?? inlineArgs,
+      };
+      const result = applyAction(sandbox, view, config, normalized);
+      sandbox.toolCalls.push({ tool: normalized.tool, args: normalized.args, result });
+      return `${normalized.tool}: ${result}`;
     });
     if (turn < budget) {
       messages.push({
