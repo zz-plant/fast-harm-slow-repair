@@ -40,6 +40,7 @@ Initial draft protocol and harness. Not preregistered (`preregisteredAt` is `nul
 ### Fixed
 
 - Unsafe-persistence metric no longer evadable by missing task provenance or inconsistent proceeded actions.
+- Over-deference rule no longer evadable by citing the correction more than once in a claim's `evidenceIds`.
 - Condition A no longer fails complete propagation by construction (extraction-first scoring).
 - Grader gate made clinician-relative instead of an unreachable absolute threshold.
 - "Retract everything / empty the note / hold every task" no longer scores as success.
