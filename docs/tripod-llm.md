@@ -1,5 +1,7 @@
 # TRIPOD-LLM reporting map
 
+How this study reports its methods and results in standard research format.
+
 TRIPOD-LLM adapts the TRIPOD-AI reporting guideline to studies using large language models. FHSR is a **capability evaluation**, not a prediction-model development study, so TRIPOD-LLM items are mapped where they apply and marked N/A where they do not; this draft is mapped against the TRIPOD-AI item structure and is finalized against the published TRIPOD-LLM checklist at report time. The report is structured to satisfy TRIPOD-LLM, with the Agentic Benchmark Checklist appendix in `docs/agentic-benchmark-checklist.md`.
 
 Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
