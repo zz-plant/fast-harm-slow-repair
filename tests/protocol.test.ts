@@ -29,8 +29,8 @@ describe("fast-harm-slow-repair eval protocol", () => {
     const target = JSON.parse(read("preregistration.json")).dataset.developmentCount;
     const caseWord = authored === 1 ? "case" : "cases";
 
-    expect(read("README.md")).toContain(`Current development cases: **${authored} of ${target}**`);
-    expect(read("README.md")).toContain(`${authored} development ${caseWord}; holdout empty`);
+    expect(read("README.md")).toContain(`Practice cases so far: **${authored} of ${target}**`);
+    expect(read("README.md")).toContain(`${authored} practice ${caseWord}; hidden tests empty`);
     expect(read("data/README.md")).toContain(`| ${authored} of ${target} `);
     expect(read("protocol.md")).toContain(`currently authored: ${authored};`);
   });

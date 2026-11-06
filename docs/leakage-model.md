@@ -1,8 +1,8 @@
-# Leakage model
+# How test answers could leak to the AI
 
 Ground truth can leak into a model's prompt through more than one channel, and no single detector covers all of them. This document defines the leakage classes, the detector for each, and the current status.
 
-## Classes and detectors
+## Types of leaks and how we catch them
 
 | Class | What leaks | Detector | Status |
 | --- | --- | --- | --- |
@@ -15,11 +15,11 @@ Ground truth can leak into a model's prompt through more than one channel, and n
 
 A structural scan is sound but incomplete: a field could be renamed, nested, or derived. The counterfactual invariance test closes that gap from the other direction — it does not care how the projection is implemented, only that its output is a function of the permitted inputs alone. Together they make the isolation claim testable rather than procedural.
 
-## Lexical overlap is not leakage
+## Sharing words is not the same as leaking answers
 
 Shared vocabulary between the prompt and the grading rubric (e.g. the words "retract" or "hold" appearing in both) is expected and benign. What the lexical lint flags is narrower: language that *instructs the model toward the graded behavior*. The distinction is functional dependence, not word overlap.
 
-## Current findings
+## What we found so far
 
 - `bun run prompt-audit`: no scoring fields reach the prompt view for any committed case.
 - `aci-dev-002` and `aci-dev-003` correction statements contain handling language and are flagged. The statements should be rewritten to state only the correction before holdout authoring begins, so the model must infer the recovery.
