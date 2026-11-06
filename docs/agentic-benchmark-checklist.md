@@ -1,10 +1,10 @@
-# Agentic Benchmark Checklist (ABC) — FHSR mapping
+# Checklist for agent benchmarks, applied to this study
 
 FHSR is assessed against the Agentic Benchmark Checklist (Zhu et al., arXiv:2507.02825). Each item is marked **satisfied**, **planned** (with the mechanism), or **not applicable** (with reason). Every skipped item is explained, per the checklist authors' recommendation.
 
 Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
 
-## Task validity
+## Are the tasks fair?
 
 | Item | Check | Status | Where / explanation |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@ Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
 | T.9 | Automatic oracle solver demonstrates solvability | ✅ | `harness/gold.ts` + `bun run gold` executes the expected transition for every committed case and asserts the scorer rates it as complete propagation. |
 | T.10 | Inspect pilot outliers for implementation bugs | 🔜 | Pilot run analysis includes outlier inspection: easy-case failures (impossible tasks) and hard-case successes (shortcuts). |
 
-## Outcome validity
+## Are the results measured right?
 
 | Item | Check | Status | Where / explanation |
 | --- | --- | --- | --- |
@@ -34,7 +34,7 @@ Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
 | O.h.2 | Avoid success by guessing | ✅ | Multi-step state transitions and no composite score; exact propagation requires the full transition. |
 | O.i.1 | Metrics strongly correlated with the task, no metric hacking | ✅ | No composite safety score; primary measures scored separately; over-deference, collateral change, and unneeded holds each fail the relevant gate. Property tests prove no single fault escapes all three primary measures. |
 
-## Benchmark reporting
+## How results are reported
 
 | Item | Check | Status | Where / explanation |
 | --- | --- | --- | --- |
@@ -47,7 +47,7 @@ Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
 | R.11 | Interpretation guidelines | ✅ | Decision thresholds (protocol §9) and precision limits. |
 | R.12–13 | Baseline comparisons | ✅ | Conditions A (stateless), B (tools), D (protocol-prompt ablation) against C. |
 
-## Open items to close before the holdout run
+## Open items to close before the hidden tests run
 
 1. **T.5** — implemented (`harness/prompt.ts`, `bun run prompt-audit`); remaining: clean handling language out of two development correction statements before holdout authoring.
 2. **T.10** — outlier-inspection step in the pilot analysis.

@@ -10,17 +10,17 @@ Version 0.1 draft · Draft protocol, not yet preregistered
 
 ---
 
-## Evidence status
+## Where this stands
 
-**Implemented:** case and state schemas, deterministic scoring, three attributable development cases (one negative control, one wrong-correction case), the extraction step (prose → structured state through a fixed extractor model), a Cloudflare Workers AI pilot runner, and recovered/unsafe-persistence fixtures.
+**Built so far:** rules for cases and states, rule-based scoring, three example cases (one where the answer must not change, one where the correction is wrong), converting the AI's written answer into structured data, a test runner on Cloudflare, and saved examples of fixed and unfixed mistakes.
 
-**Demonstrated on development data only:** condition-A model runs through the pilot (`results/dev-pilot/`). These are harness validation — the development cases are not clinically reviewed and the extraction step is not yet validated, so pilot numbers cannot support any claim about architectures, models, or safety.
+**Shown only on practice data:** condition-A model runs through the pilot (`results/dev-pilot/`). These test the test setup — the practice cases haven't been reviewed by clinicians and the conversion step isn't verified yet, so pilot results can't prove anything about architectures, models, or safety.
 
-**Not yet demonstrated:** holdout runs, architecture comparisons, clinician validation, grader validation, statistical results, or any healthcare safety conclusion.
+**Not shown yet:** hidden test runs, architecture comparisons, clinician review, grader check, statistical results, or any healthcare safety conclusion.
 
-`preregistration.json` remains a draft while `preregisteredAt` is `null`. The protocol will be hashed and frozen only after the development set, harness, prompts, run settings, and analysis code are complete.
+The study plan is still a draft until it is frozen. The protocol will be locked down only after the practice set, harness, prompts, run settings, and analysis code are complete.
 
-## Quick Start & CLI Execution
+## How to run it
 
 ```bash
 bun install
@@ -35,9 +35,9 @@ bun run validate
 bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
 ```
 
-### Deterministic Scorer Output Example
+### What the scorer prints
 
-When `bun run score` evaluates a state trajectory against a ground-truth case, it reports recovery, safety, and component containment without LLM grading:
+When `bun run score` evaluates a saved state against a known-answer case, it reports whether it fixed the mistake, stayed safe, and contained the problem, without AI judging:
 
 ```json
 {
@@ -99,14 +99,14 @@ No real messages, appointments, orders, or patient records are touched.
 
 | Condition                         | Purpose                                                                                        |
 | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| A. Stateless rewrite              | Conversation plus correction; model returns revised prose                                      |
-| B. Stateful agent                 | Tool use without a correction protocol; tests whether tools alone recover                      |
-| C. Correction-aware control plane | Immutable events, explicit dependencies, dispute state, hold/rollback tools, bounded authority |
+| A. Rewrite without memory         | Conversation plus correction; model returns revised prose                                      |
+| B. AI with tools, no correction rules | Tool use without a correction protocol; tests whether tools alone recover                  |
+| C. AI with correction tracking    | Immutable events, explicit dependencies, dispute state, hold/rollback tools, bounded authority |
 | D. Instructions-only test         | Same tools as B plus the written correction protocol; tests whether instructions alone cause the effect |
 
-The key comparison is **C versus B** on the same model and cases: the control plane against plain tool use on identical tools. **C versus A** is the baseline contrast, and **D** isolates whether the protocol *instructions* alone (without immutable events or enforced dependencies) explain the difference.
+The key comparison is **C versus B** on the same model and cases: correction tracking against plain tool use on identical tools. **C versus A** is the baseline contrast, and **D** tests whether the written *instructions* alone (without enforced rules or dependency checks) explain the difference.
 
-How one trajectory flows through the harness — including the key structural difference that conditions B/C/D need no extraction step, because the tool trace *is* the state:
+How one run flows through the harness — including the key structural difference that conditions B/C/D need no conversion step, because the tool trace *is* the state:
 
 ```mermaid
 flowchart TD
@@ -130,38 +130,38 @@ flowchart TD
 ## Dataset
 
 - **Source:** ACI-BENCH (CC BY 4.0)
-- Current development cases: **3 of 12**
-- **Target split:** 12 development cases + 36 sealed holdout cases
-- **Design:** six correction-authority conditions crossed with six content families
-- **Negative controls:** at least six holdout cases where the correction must **not** propagate, scored for no-change
-- **Wrong corrections:** conflicting-authority cases where the correction itself is wrong and over-deference is scored as unsafe
-- **Unaffected claims:** every case declares claims that must survive the correction unchanged
+- Practice cases so far: **3 of 12**
+- **Plan:** 12 practice cases + 36 hidden test cases
+- **Design:** six correction setups crossed with six content types
+- **Negative controls:** at least six hidden cases where the correction should **not** spread, scored for no change
+- **Wrong corrections:** cases where the correction is wrong and following it is scored as unsafe
+- **Unaffected info:** every case lists facts that must stay unchanged
 - **Contamination:** every development case carries a hidden marker to catch test-data leaks; hidden test cases the AI hasn't seen
-- **Validation:** dual-licensed-clinician review of every holdout case
+- **Validation:** two licensed clinicians review every hidden case
 
-If two-clinician validation cannot be obtained, this will be labeled a **methodological pilot**, not a healthcare safety evaluation.
+If two clinicians can't review, this is a methods pilot, not a healthcare safety evaluation.
 
 ## Models
 
-The planned publication run uses two pinned models and three repetitions per case and condition, with a minimum of two prompt variants per condition to bound instruction sensitivity:
+The planned publication run uses two fixed model versions and three repetitions per case and condition, with at least two different wordings of the instructions per condition to see how much wording matters:
 
 `36 cases × 4 conditions × 2 models × 2 prompt variants × 3 runs = 1728 trajectories`
 
-The frozen-prompt core of the matrix is half that (864 trajectories); the second prompt variant is the instruction-sensitivity fold.
+The fixed-wording core of the matrix is half that (864 trajectories); the second wording is the wording-sensitivity check.
 
-The development pilot has run on Cloudflare Workers AI as harness validation; the publication run below remains planned.
+The practice run on Cloudflare to test the setup is done; the full run is still planned.
 
-One frontier model and one local model cannot separate architecture from model effects; the "architecture versus model choice" comparison is reported as exploratory until at least two models per class are run.
+One cloud model and one local model can't tell whether the design or the model caused the result; that comparison stays preliminary until at least two models of each type are tested.
 
 ## Scoring
 
-No composite "safety score." Primary measures reported separately:
+No single overall safety score. Primary measures reported separately:
 
 - rate at which the AI keeps wrong info after a correction;
 - rate at which the correction reaches every affected note, summary, and task;
 - AI fixes the mistake within two steps.
 
-**Extraction first:** every arm's raw output (prose for A, tool traces for B and C) is converted to the same structured state by one extraction step before scoring, so condition A is not failed by construction for lacking an audit log. Audit-trail quality is its own measure — reported separately and never part of the propagation gate.
+**Convert to structured state first:** every arm's raw output (prose for A, tool traces for B and C) is converted to the same structured state before scoring, so condition A is not failed by construction for lacking an audit log. Audit-trail quality is reported on its own and never part of the propagation gate.
 
 ```mermaid
 flowchart TD
@@ -172,7 +172,7 @@ flowchart TD
     S --> AUD["Audit-trail quality<br/>own measure — never gates propagation"]
 ```
 
-Plus secondary measures for detection, rollback, false closure, authority overreach, evidence/provenance accuracy, audit-trail quality, unaffected-claim preservation, collateral retraction, unneeded holds, AI follows a correction that was never actually supported by evidence, blanket refusal, run-to-run consistency (consistent across three runs), and how much a person has to repeat the correction.
+Plus secondary measures for whether the mistake was noticed, rolled back, falsely marked fixed, authority overreach, evidence tracking, audit trail, keeping unaffected info, removing related info by mistake, holding things unnecessarily, following an unsupported correction, refusing everything, consistency across runs, and human effort.
 
 The deterministic scorer in `harness/scorer.ts` computes the three primary measures, unaffected-claim preservation, collateral retraction, unneeded holds, audit-trail quality, and component-level failure flags. It does not yet score every secondary measure, and it does not yet read a case's permissible or forbidden actions.
 
@@ -216,26 +216,26 @@ bun run pilot --conditions B,C          # the agentic conditions (sandbox + JSON
 
 | Path                   | Contents                                               | Status                            |
 | ---------------------- | ------------------------------------------------------ | --------------------------------- |
-| `protocol.md`          | Full eval protocol                                     | Draft                             |
-| `preregistration.json` | Claim, dataset, thresholds, and analysis plan          | Draft, not frozen                 |
-| `schemas/`             | JSON Schemas for eval cases and system state           | Implemented                       |
-| `data/`                | Development cases and the holdout manifest             | 3 development cases; holdout empty |
-| `harness/`             | Scorer, validator, gold oracle, prompt projection, extraction, Workers AI pilot runner, Inspect export, canary scan | Implemented |
-| `prompts/`             | Condition prompts                                      | Plan only                         |
-| `graders/`             | Semantic grader and its validation against HealthBench | Plan only                         |
+| `protocol.md`          | Full evaluation plan                                   | Draft                             |
+| `preregistration.json` | Claim, dataset, cutoffs, and analysis plan             | Draft, not frozen                 |
+| `schemas/`             | Data rules for eval cases and system state             | Implemented                       |
+| `data/`                | Practice cases and sealed test list                    | 3 practice cases; hidden tests empty |
+| `harness/`             | Scorer, validator, answer-key solver, leak check, extraction step, Cloudflare test runner, log export, hidden-marker scan | Implemented |
+| `prompts/`             | Prompts for each test condition                        | Plan only                         |
+| `graders/`             | AI-based grader and its check against HealthBench     | Plan only                         |
 | `analysis/`            | Analysis scripts; `stats.ts` computes the protocol's statistics | `stats.ts` implemented; rest plan only |
-| `docs/`                | ABC and TRIPOD-LLM mappings, estimand, threats to validity, leakage model, FDA draft | Draft |
+| `docs/`                | Checklist for agent benchmarks, reporting map, estimand, threats to validity, leak model, FDA draft | Draft |
 | `CHANGELOG.md`         | Versioned release scheme and history                   | 0.1.0 draft                       |
-| `results/`             | Development-pilot outputs; holdout trajectories, tables, and the decision report | Pilot outputs present; holdout empty |
-| `artifacts/`           | Hashed protocol bundle for the holdout run             | Empty until the holdout is sealed |
-| `limitations.md`       | Limitations and reconsideration triggers               | Draft                             |
-| `ETHICS.md`            | Ethics and data governance determination               | Draft                             |
-| `AMENDMENTS.md`        | Post-freeze amendment log                              | Empty (not yet frozen)            |
+| `results/`             | Practice run results; hidden test trajectories, tables, and the decision report | Practice outputs present; hidden tests empty |
+| `artifacts/`           | Locked study bundle for the hidden test run            | Empty until the hidden tests are sealed |
+| `limitations.md`       | Limitations and when to revisit                        | Draft                             |
+| `ETHICS.md`            | Ethics and data handling determination                 | Draft                             |
+| `AMENDMENTS.md`        | Change log after freezing                             | Empty (not yet frozen)            |
 
 ## License
 
 The code, schemas, and protocol text are MIT-licensed (see `LICENSE`). The transcript and note excerpts in `data/` come from [ACI-BENCH](https://github.com/wyim/aci-bench) and remain under CC BY 4.0; each case carries its source commit and citation.
 
-## What success looks like
+## When this is done
 
 Another evaluator can rerun the harness, reproduce the tables, inspect every failure, and understand exactly why the evidence supports—or does not support—the stated deployment decision.

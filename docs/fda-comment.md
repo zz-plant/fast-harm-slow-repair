@@ -1,4 +1,4 @@
-# Draft comment — FDA discussion paper on generative AI-enabled medical devices
+# Draft comment to FDA on AI medical devices
 
 **Docket:** FDA-2026-N-7874
 **Comment deadline:** 19 October 2026
@@ -10,7 +10,7 @@
 
 Comment submitted on behalf of the Fast Harm, Slow Repair evaluation (a non-clinical benchmark for correction and rollback failures in healthcare AI documentation workflows). Contact: [author email].
 
-## 2. Supporting the competency-assessment concept
+## 2. Why testing AI skills makes sense
 
 The proposed "competency assessment" made of non-clinical benchmarking plus clinical confirmation, with periodic re-benchmarking after market, is the right structure for generative AI documentation and care-coordination devices. We support it and offer one concrete benchmark category for the non-clinical component: **correction failure** — whether a system, after its record becomes wrong, propagates a contradicted claim or dependent action, or recovers correctly.
 

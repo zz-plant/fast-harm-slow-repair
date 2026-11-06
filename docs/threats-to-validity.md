@@ -4,7 +4,7 @@ What could make this result wrong — and what we do about it.
 
 Structured by validity type, with the mitigation in place and the residual risk that remains after it.
 
-## Internal validity
+## Could our own setup skew results?
 
 | Threat | Mitigation | Residual |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ Structured by validity type, with the mitigation in place and the residual risk 
 | Harness confounding across arms | Identical resources, tools, token budget, and prompt variants; one extraction step. | Subtle tool-description differences could remain. |
 | Hidden manual repair | Every intervention must appear in the audit log (own measure). | A repair that is never logged is unobservable by construction — inherent. |
 
-## External validity
+## Will this generalize?
 
 | Threat | Mitigation | Residual |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Structured by validity type, with the mitigation in place and the residual risk 
 | Model and version churn | Models pinned and hashed; training cutoffs recorded; re-benchmarking plan. | A future model's behaviour is not predicted. |
 | Sandbox tool semantics differ from real actions | Tools map to standard EHR concepts (entered-in-error, refuted, Task on-hold, Provenance); clinician review of the simulated semantics. | A real system's rollback may be irreversible in ways the sandbox is not. |
 
-## Construct validity
+## Are we measuring the right thing?
 
 | Threat | Mitigation | Residual |
 | --- | --- | --- |
@@ -37,7 +37,7 @@ Structured by validity type, with the mitigation in place and the residual risk 
 | Severity rubric is a free judgment | Clinicians rate against a stated harm basis; κ/α reported. | Inter-rater disagreement remains and is reported. |
 | Authority conditions may not cover real correction paths | Six conditions crossed with six content families; conflicts, stale evidence, and pressure included. | Unknown authority paths may exist. |
 
-## Statistical conclusion validity
+## Are the statistics sound?
 
 | Threat | Mitigation | Residual |
 | --- | --- | --- |
