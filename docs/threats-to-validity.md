@@ -1,5 +1,7 @@
 # Threats to validity
 
+What could make this result wrong — and what we do about it.
+
 Structured by validity type, with the mitigation in place and the residual risk that remains after it.
 
 ## Internal validity

@@ -1,6 +1,8 @@
 # Estimand and analysis units
 
-Following ICH E9(R1), the estimand states the population, the treatment, the outcome, and how intercurrent events are handled — fixed before any data is seen.
+What exactly we measure, and in whom — fixed before any data is seen.
+
+Following ICH E9(R1), the estimand states the population, the treatment, the outcome, and how intercurrent events are handled.
 
 ## Primary estimand
 
