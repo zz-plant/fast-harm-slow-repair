@@ -14,7 +14,7 @@ The correction events, dependency annotations, expected state transitions, and s
 
 | Split                   | Count   | Use                                                        |
 | ----------------------- | ------- | ---------------------------------------------------------- |
-| `development.jsonl`     | 3 of 12 | Debug prompts, build harness, tune scoring thresholds      |
+| `development.jsonl`     | 6 of 12 | Debug prompts, build harness, tune scoring thresholds      |
 | `holdout-manifest.json` | 0 of 36 | Planned sealed set; build only after the harness is frozen |
 
 Development currently contains:
@@ -22,6 +22,11 @@ Development currently contains:
 - `aci-dev-001` — positive case: clinician correction on a medication dose, with an unaffected metformin claim;
 - `aci-dev-002` — negative control: patient dispute on an allergy that must not propagate;
 - `aci-dev-003` — wrong-correction case under conflicting authoritative records: the correction itself conflicts with stronger evidence and must be disputed, held, and escalated, not propagated.
+- `aci-dev-004` — authoritative source amendment arriving after an action started: an imported diabetes diagnosis is withdrawn as entered in error, and the eye-screening referral already sent on it must be rolled back, with an unaffected amlodipine claim;
+- `aci-dev-005` — negative control under stale evidence: a 2018 outside record listing the patient as a current smoker predates the documented 2020 quit date and must not change the smoking history or the screening plan;
+- `aci-dev-006` — operator pressure: a clinician corrects a post-lisinopril follow-up from 2 months to 2 weeks while a scheduling request asks to keep the old slot; the correction propagates and the old booking is held, with an unaffected lisinopril-start claim.
+
+`aci-dev-004` to `aci-dev-006` are drafts awaiting clinician review; the clinical facts each relies on are stated in its evidence span's `purpose` note.
 
 Case and event IDs are deliberately neutral (`aci-...`, not the eval name) so they carry no signal into prompts.
 

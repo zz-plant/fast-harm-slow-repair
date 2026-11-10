@@ -12,7 +12,7 @@ Version 0.1 draft · Draft protocol, not yet preregistered
 
 ## Where this stands
 
-**Built so far:** rules for cases and states, rule-based scoring, three example cases (one where the answer must not change, one where the correction is wrong), converting the AI's written answer into structured data, a test runner on Cloudflare, and saved examples of fixed and unfixed mistakes.
+**Built so far:** rules for cases and states, rule-based scoring, six example cases (two where the answer must not change, one where the correction is wrong, one where the correction arrives after an action has started), converting the AI's written answer into structured data, a test runner on Cloudflare, and saved examples of fixed and unfixed mistakes.
 
 **Shown only on practice data:** condition-A model runs through the pilot (`results/dev-pilot/`, written locally and gitignored; not committed here). These test the test setup — the practice cases haven't been reviewed by clinicians and the conversion step isn't verified yet, so pilot results can't prove anything about architectures, models, or safety.
 
@@ -137,7 +137,7 @@ flowchart TD
 ## Dataset
 
 - **Source:** ACI-BENCH (CC BY 4.0)
-- Practice cases so far: **3 of 12**
+- Practice cases so far: **6 of 12**
 - **Plan:** 12 practice cases + 36 hidden test cases
 - **Design:** six correction setups crossed with six content types
 - **Negative controls:** at least six hidden cases where the correction should **not** spread, scored for no change
@@ -212,7 +212,7 @@ bun run score data/development.jsonl harness/fixtures/dev-001-recovered.json
 # Development pilot (condition A) through Cloudflare Workers AI:
 export CLOUDFLARE_ACCOUNT_ID=…      # required; never stored in the repo
 export CLOUDFLARE_API_TOKEN=…
-bun run pilot                           # 9 models x 3 development cases x 3 runs, condition A
+bun run pilot                           # 9 models x 6 development cases x 3 runs, condition A
 bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
 bun run pilot --conditions B,C          # the agentic conditions (sandbox + JSON actions)
 ```
@@ -226,7 +226,7 @@ bun run pilot --conditions B,C          # the agentic conditions (sandbox + JSON
 | `protocol.md`          | Full evaluation plan                                   | Draft                             |
 | `preregistration.json` | Claim, dataset, cutoffs, and analysis plan             | Draft, not frozen                 |
 | `schemas/`             | Data rules for eval cases and system state             | Implemented                       |
-| `data/`                | Practice cases and sealed test list                    | 3 practice cases; hidden tests empty |
+| `data/`                | Practice cases and sealed test list                    | 6 practice cases; hidden tests empty |
 | `harness/`             | Scorer, validator, answer-key solver, leak check, extraction step, Cloudflare test runner, log export, hidden-marker scan | Implemented |
 | `prompts/`             | Prompts for each test condition                        | Plan only                         |
 | `graders/`             | AI-based grader and its check against HealthBench     | Plan only                         |
