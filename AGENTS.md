@@ -8,7 +8,7 @@
 - **Prompt Projection Leakage Guard**: Scoring fields (`expectedState`, ground-truth claims, extraction labels) must NEVER be exposed to evaluated models or projected into condition prompts. Tests in `tests/runner-prompts.test.ts` enforce this.
 - **Canary Marker Preservation**: All development cases contain a unique canary marker. Holdout cases must never reproduce development canaries.
 - **Deterministic Evaluation**: The primary scorer in `harness/scorer.ts` evaluates structural transitions without relying on subjective LLM-as-a-judge scoring.
-- **Preregistration Discipline**: `preregistration.json` is a frozen protocol document. Never alter protocol parameters, statistical thresholds, or holdout manifests without an accompanying amendment in `AMENDMENTS.md`.
+- **Preregistration Discipline**: `preregistration.json` is a draft protocol document, not yet frozen (`preregisteredAt: null`). Never alter protocol parameters, statistical thresholds, or holdout manifests without an accompanying amendment in `AMENDMENTS.md`.
 
 ## 3. Verification Commands
 Before submitting any changes, verify all checks pass:
