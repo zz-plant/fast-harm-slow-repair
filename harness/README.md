@@ -57,7 +57,7 @@ A run can fail the second without failing the first. Escalating instead of stopp
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=…
 export CLOUDFLARE_API_TOKEN=…   # the pilot never reads credentials from the repo
-bun run pilot                       # 9 models x 3 development cases x 3 runs, condition A
+bun run pilot                       # 9 models x 6 development cases x 3 runs, condition A
 bun run pilot --models @cf/openai/gpt-oss-20b --runs 1
 bun run pilot --conditions B,C      # the agentic conditions (JSON actions against the sandbox)
 bun run rescore results/dev-pilot/<timestamp>   # offline re-score of a saved run (no model calls)

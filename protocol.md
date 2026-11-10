@@ -95,7 +95,7 @@ The key comparison is **C versus B** on the same model and cases: the control pl
 
 We use ACI-BENCH because it contains full clinician-patient conversations with associated reference notes, has 207 examples across published splits, and is licensed CC BY 4.0. Some transcripts intentionally retain realistic speaker-tagging errors.
 
-- target: 12 development cases for building and debugging; currently authored: 3;
+- target: 12 development cases for building and debugging; currently authored: 6;
 - target: 36 sealed holdout cases; currently authored: 0;
 - six correction-authority conditions crossed with six content families.
 
