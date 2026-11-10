@@ -14,7 +14,7 @@ Version 0.1 draft · Draft protocol, not yet preregistered
 
 **Built so far:** rules for cases and states, rule-based scoring, three example cases (one where the answer must not change, one where the correction is wrong), converting the AI's written answer into structured data, a test runner on Cloudflare, and saved examples of fixed and unfixed mistakes.
 
-**Shown only on practice data:** condition-A model runs through the pilot (`results/dev-pilot/`). These test the test setup — the practice cases haven't been reviewed by clinicians and the conversion step isn't verified yet, so pilot results can't prove anything about architectures, models, or safety.
+**Shown only on practice data:** condition-A model runs through the pilot (`results/dev-pilot/`, written locally and gitignored; not committed here). These test the test setup — the practice cases haven't been reviewed by clinicians and the conversion step isn't verified yet, so pilot results can't prove anything about architectures, models, or safety.
 
 **Not shown yet:** hidden test runs, architecture comparisons, clinician review, grader check, statistical results, or any healthcare safety conclusion.
 
@@ -25,7 +25,7 @@ The study plan is still a draft until it is frozen. The protocol will be locked 
 ```bash
 bun install
 
-# Run unit tests across schema validation, extractors, and statistics (184 tests)
+# Run unit tests across schema validation, extractors, and statistics (185 tests)
 bun test tests
 
 # Validate all development cases and evaluation fixtures against JSON schemas
@@ -62,7 +62,14 @@ When `bun run score` evaluates a saved state against a known-answer case, it rep
     "provenanceAccurate": true,
     "falseClosure": false,
     "humanCorrectionRepetitions": 0
-  }
+  },
+  "auditTrail": {
+    "expressible": true,
+    "complete": true,
+    "missingRequiredEventTypes": [],
+    "spuriousEventCount": 0
+  },
+  "failureFlags": []
 }
 ```
 
@@ -226,7 +233,7 @@ bun run pilot --conditions B,C          # the agentic conditions (sandbox + JSON
 | `analysis/`            | Analysis scripts; `stats.ts` computes the protocol's statistics | `stats.ts` implemented; rest plan only |
 | `docs/`                | Checklist for agent benchmarks, reporting map, estimand, threats to validity, leak model, FDA draft | Draft |
 | `CHANGELOG.md`         | Versioned release scheme and history                   | 0.1.0 draft                       |
-| `results/`             | Practice run results; hidden test trajectories, tables, and the decision report | Practice outputs present; hidden tests empty |
+| `results/`             | Practice run results; hidden test trajectories, tables, and the decision report | Practice outputs gitignored, not committed; hidden tests empty |
 | `artifacts/`           | Locked study bundle for the hidden test run            | Empty until the hidden tests are sealed |
 | `limitations.md`       | Limitations and when to revisit                        | Draft                             |
 | `ETHICS.md`            | Ethics and data handling determination                 | Draft                             |
