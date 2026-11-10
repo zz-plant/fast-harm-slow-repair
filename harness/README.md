@@ -73,7 +73,7 @@ Conditions: `A` is the stateless rewrite (prose, extracted by a fixed model). `B
 ## Responsibilities
 
 - Load a frozen case.
-- Run the system under condition A, B, or C.
+- Run the system under condition A, B, C, or D.
 - Expose tools identical across conditions where applicable.
 - Record every state transition, tool call, model output, and audit event.
 - Enforce turn budget and forbidden-action rules.
