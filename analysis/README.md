@@ -35,6 +35,7 @@ After any pilot or holdout run: a case that every model passes (ceiling) or no m
 ## Annotation reliability
 
 - Cohen's κ and Krippendorff's α for clinician labels (expected transitions, severity, artifact-change decisions), alongside raw agreement.
+- `harness/review/agree.ts` (`bun run review:agree`) computes raw agreement and unweighted Cohen's κ for each label, and linear-weighted agreement and κ for severity, from pairs of clinician review forms. Krippendorff's α is not computed yet.
 
 ## Reporting
 

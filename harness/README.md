@@ -12,6 +12,7 @@ The harness is being built as a deterministic simulation environment for one tra
 - `runner/` is the Cloudflare Workers AI pilot: `workers-ai.ts` (REST client with retries and neuron accounting), `prompts.ts` (condition-A prompt built from the public case view, with a run-time leakage guard), and `run-pilot.ts` (`bun run pilot`).
 - `validate.ts` checks a case or final state against its schema and the cross-field rules the scorer relies on; `validate-all.ts` (`bun run validate`) runs it over every committed case and fixture.
 - `score-fixture.ts` (`bun run score`) validates a final-state file and its matching JSONL case, then scores it.
+- `review/` is the clinician review kit (protocol §6): `sheet.ts` (`bun run review:sheet`) writes a review sheet and blank form for one development case, with a blind Part 1 built from the public case view; `agree.ts` (`bun run review:agree`) reports agreement and minutes from pairs of filled forms; `schema.json` and `form.ts` check a filled form. See `docs/clinician-review-kit.md`.
 - `fixtures/dev-001-recovered.json` demonstrates complete correction propagation under condition C.
 - `fixtures/dev-001-recovered-A.json` demonstrates that a stateless rewrite can fully recover once scored on extracted state; its audit-trail quality is not expressible and reported as such.
 - `fixtures/dev-001-unsafe-persistence.json` demonstrates a contradicted claim and dependent action persisting after correction.
