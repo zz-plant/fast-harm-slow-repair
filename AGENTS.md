@@ -13,7 +13,7 @@
 ## 3. Verification Commands
 Before submitting any changes, verify all checks pass:
 ```bash
-bun test tests     # Runs complete 185-test verification suite
+bun test tests     # Runs the complete verification suite
 bun run validate   # Validates all cases and fixtures against JSON Schema
 bun run typecheck  # Strict TypeScript compilation check
 ```

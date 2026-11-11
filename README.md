@@ -25,7 +25,7 @@ The study plan is still a draft until it is frozen. The protocol will be locked 
 ```bash
 bun install
 
-# Run unit tests across schema validation, extractors, and statistics (185 tests)
+# Run unit tests across schema validation, extractors, and statistics
 bun test tests
 
 # Validate all development cases and evaluation fixtures against JSON schemas

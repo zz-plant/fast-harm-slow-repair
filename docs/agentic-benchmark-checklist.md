@@ -25,7 +25,7 @@ Status key: ✅ satisfied · 🔜 planned · ➖ not applicable
 | --- | --- | --- | --- |
 | O.a.1–2 | Whole-string matching: equivalent expressions, redundant words | ➖ | No string matching. |
 | O.b.1–3 | Substring matching: negation, listing-all-answers, guessing | ➖ | No substring matching. |
-| O.c.1 | LLM-as-judge pilot: accuracy and self-consistency | ✅ | Judge validated against two study clinicians; repeated-label agreement ≥ 0.95; gate relative to clinician-clinician agreement. |
+| O.c.1 | LLM-as-judge pilot: accuracy and self-consistency | 🔜 | Planned, not done: no judge exists yet (`graders/` holds only its README). The plan is to validate the judge against the two study clinicians, require repeated-label agreement ≥ 0.95, and set the gate relative to clinician-clinician agreement (protocol §10). |
 | O.d–O.f | Code generation testing (unit/fuzz/E2E) | ➖ | Not a code-generation benchmark. |
 | O.g.1 | Ground-truth states include all achievable outcomes | 🔜 | One adjudicated canonical transition per case; per-clinician re-scoring (each clinician's individual expectations) covers outcome variation. |
 | O.g.2 | State space includes relevant **and irrelevant** states | ✅ | Unaffected claims must survive; negative controls must change nothing; collateral retractions and unneeded holds are scored; audit-trail quality is a separate measure. |
