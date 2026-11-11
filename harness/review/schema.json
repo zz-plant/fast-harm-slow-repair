@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/zz-plant/fast-harm-slow-repair/main/harness/review/schema.json",
+  "title": "Fast Harm, Slow Repair — clinician review form",
+  "description": "One reviewer's answers for one case (protocol section 6). Part 1 is answered before the reviewer sees the author's annotations; Part 2 checks the author's dependency annotations against the evidence. Every value set is taken from the case schema by reference, so the form cannot use a category the case schema does not have. harness/review/form.ts adds the cross-field rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formVersion",
+    "caseId",
+    "sheetSha256",
+    "reviewerInitials",
+    "licenceType",
+    "minutesSpent",
+    "part1",
+    "part2"
+  ],
+  "properties": {
+    "formVersion": { "const": 1 },
+    "caseId": { "type": "string", "minLength": 1 },
+    "sheetSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the review sheet text the reviewer read. Two forms are compared only when they carry the same value."
+    },
+    "reviewerInitials": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}$",
+      "description": "Initials only: two to four capital letters. No names or contact details."
+    },
+    "licenceType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^[^@0-9]+$",
+      "description": "The type of licence, for example MD, DO, NP, PA or RN. No licence numbers or contact details."
+    },
+    "minutesSpent": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Minutes from starting Part 1 to finishing Part 2, not counting breaks."
+    },
+    "part1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correctionUnambiguous",
+        "claimTransitions",
+        "newClaims",
+        "artifactMustChange",
+        "downstreamTaskStatus",
+        "actionStatus",
+        "expectedDisputeStatus",
+        "severityTier",
+        "notes"
+      ],
+      "properties": {
+        "correctionUnambiguous": { "type": "boolean" },
+        "claimTransitions": {
+          "description": "The status each initial claim should have once the correction is handled, keyed by claim ID.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "../../schemas/case.schema.json#/properties/initialReferenceState/properties/claims/items/properties/status"
+          }
+        },
+        "newClaims": {
+          "description": "Claims the record should gain, such as a replacement. Empty when none.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "replacesClaimId"],
+            "properties": {
+              "text": { "type": "string", "minLength": 1 },
+              "replacesClaimId": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "artifactMustChange": {
+          "description": "Whether each artifact must change, keyed by the case schema's artifact names.",
+          "type": "object",
+          "required": ["currentRecord", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"],
+          "propertyNames": {
+            "$ref": "../../schemas/case.schema.json#/properties/artifactDependencies/items/properties/artifact"
+          },
+          "additionalProperties": { "type": "boolean" }
+        },
+        "downstreamTaskStatus": {
+          "$ref": "../../schemas/case.schema.json#/properties/expectedStateTransition/properties/downstreamTaskStatus"
+        },
+        "actionStatus": {
+          "$ref": "../../schemas/case.schema.json#/properties/expectedStateTransition/properties/actionStatus"
+        },
+        "expectedDisputeStatus": {
+          "$ref": "../../schemas/case.schema.json#/properties/expectedDisputeStatus"
+        },
+        "severityTier": {
+          "$ref": "../../schemas/case.schema.json#/properties/severityTier"
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "part2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactDependencies", "unaffectedClaimListing", "notes"],
+      "properties": {
+        "artifactDependencies": {
+          "description": "Whether the author's dependency list for each artifact matches the evidence.",
+          "type": "object",
+          "required": ["currentRecord", "clinicalDraftNote", "patientFacingSummary", "downstreamTask"],
+          "propertyNames": {
+            "$ref": "../../schemas/case.schema.json#/properties/artifactDependencies/items/properties/artifact"
+          },
+          "additionalProperties": { "$ref": "#/$defs/check" }
+        },
+        "unaffectedClaimListing": {
+          "description": "For every initial claim, whether the author was right to list it, or not list it, as unaffected. Keyed by claim ID.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/check" }
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matchesEvidence", "note"],
+      "properties": {
+        "matchesEvidence": { "type": "boolean" },
+        "note": { "type": "string", "description": "Required to be non-empty when matchesEvidence is false." }
+      }
+    }
+  }
+}
