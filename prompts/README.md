@@ -1,6 +1,6 @@
 # Prompts
 
-This directory contains frozen prompts for the three evaluation conditions.
+This directory will hold the frozen prompts for the four evaluation conditions below. None is written or frozen yet: what follows is the plan for each, and the prompt files arrive at freezing (see the end of this page).
 
 ## Condition A — Stateless rewrite
 
